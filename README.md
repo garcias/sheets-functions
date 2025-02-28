@@ -10,8 +10,8 @@ I tend to follow JavasScript-like conventions (e.g., indentation and bracket ali
 ```js
 /**
  * XLOOKUPIFERRORARRAY
+ *   Applies XLOOKUPIFERROR to a range of keys, with header column
  * 
- * XLOOKUPIFERROR applied on a range of keys, with header column
  * @param {Range} keyrange - range of keys, e.g. A:A
  * @param {Range} lookup_range - range to search for each key, e.g. sheet1!D:D
  * @param {Range} result_range - range that contains result values, e.g. sheet1!A:A
