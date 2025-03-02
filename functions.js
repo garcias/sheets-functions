@@ -61,12 +61,14 @@ MELT
 = {
   { CHOOSEROWS(index_range, 1), "variable", "value" }; 
   ARRAYFORMULA( 
-    SPLIT( FLATTEN( 
-      TRANSPOSE( QUERY( TRANSPOSE( TRIM_HEADER(index_range, 1) & DELIM() ), , 10^100 ) ) & 
-      CHOOSEROWS(values_range, 1) & DELIM() & 
-      TRIM_HEADER(values_range, 1) 
-    ), DELIM(), false, false 
-  ) )
+    SPLIT( 
+      FLATTEN( 
+        TRANSPOSE( QUERY( TRANSPOSE( TRIM_HEADER(index_range, 1) & DELIM() ), , 10^100 ) ) & 
+        CHOOSEROWS(values_range, 1) & DELIM() & 
+        TRIM_HEADER(values_range, 1) 
+      ), DELIM(), false, false 
+    ) 
+  )
 }
 
 /**
@@ -199,3 +201,30 @@ CROSSJOIN
       ), DELIM()) 
   )
 }
+
+/**
+ * QBN
+ *   QUERY function but query string refers to columns by names enclosed in backticks ``
+ * 
+ *   Developed entirely by Stack Exchange user carecki (https://webapps.stackexchange.com/users/304122/carecki)
+ *   https://webapps.stackexchange.com/questions/57540/can-i-use-column-headers-in-a-query/167714#167714
+ * 
+ * @param {Array} data - array whose first row is column headers, e.g. A:F
+ * @param {String} query_text - query that refers to column headers in backticks
+ *                              e.g. "select `last`, `first` where `reported age` > 30"
+ * @return {Array}
+ */
+QBN
+= QUERY(
+  {data}, 
+  LAMBDA( text, columns,
+    REDUCE( 
+      text, 
+      FILTER( columns, NOT(ISBLANK(columns)) ), 
+      LAMBDA( res, col, 
+        REGEXREPLACE(res, "`" & col & "`", "Col" & MATCH(col, columns, 0))
+      )
+    )
+  ) ( query_text, ARRAY_CONSTRAIN( data, 1, COLUMNS(data) ) ),
+  1
+)
