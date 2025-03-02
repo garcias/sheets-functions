@@ -8,7 +8,6 @@
  * @param {Integer} number_of_rows - rows to remove from top, e.g. 1
  * @return {Range} same as full_array with one less row
  */
-
 TRIM_HEADER
 = QUERY( 
   full_array, 
@@ -28,7 +27,6 @@ TRIM_HEADER
  *                                e.g. A1:B1, {"last", "first"}, "name"
  * @return {Range} same as full_array except for the top row
  */
-
 REPLACE_HEADER
 = {
   headers_array; 
@@ -59,7 +57,6 @@ REPLACE_HEADER
  *   "Ben",   "Brink", "arrive", "7:45 am" ;
  *   "Ben",   "Brink", "leave",  "3:45 pm" }
  */
-
 MELT
 = {
   { CHOOSEROWS(index_range, 1), "variable", "value" }; 
@@ -83,7 +80,6 @@ MELT
  * @param {value} default - value to return if error, e.g. 0, ""
  * @return {value} value that matches key
  */
-
 VLOOKUPIFERROR
 = IFERROR( 
   VLOOKUP( key, datarange, index, sorted ),
@@ -100,11 +96,11 @@ VLOOKUPIFERROR
  * @param {Boolean} sorted - whether the keys are sorted, e.g. "FALSE"
  * @return {Array} an Array of results, one for each value in the keyrange
  */
-
 VLOOKUPIFERRORARRAY
 = ARRAYFORMULA(
   IFERROR( VLOOKUP( keyrange, datarange, index, sorted ), "" )
 )
+
 /**
  * VLOOKUPIFERRORARRAYWITHHEADER
  *   Applies VLOOKUPIFERROR to a range of keys, with "" as default value, with header column
@@ -117,7 +113,6 @@ VLOOKUPIFERRORARRAY
  * @param {Integer} headerrow - row number of header, e.g. 1
  * @return {Array} an Array of results, one for each value in the keyrange
  */
-
 VLOOKUPIFERRORARRAYWITHHEADER
 = ARRAYFORMULA(
   IF(
@@ -137,7 +132,6 @@ VLOOKUPIFERRORARRAYWITHHEADER
  * @param {value} default - value to return if error, e.g. 0, ""
  * @return {value} value in result_range that matches key
  */
-
 XLOOKUPIFERROR
 = IFERROR( 
   XLOOKUP( key, lookup_range, result_range ),
@@ -153,7 +147,6 @@ XLOOKUPIFERROR
  * @param {Range} result_range - range that contains result values, e.g. sheet1!A:A
  * @return {Array} an Array of results, one for each value in the keyrange
  */
-
 XLOOKUPIFERRORARRAY
 = ARRAYFORMULA(
   IFERROR( XLOOKUP( keyrange, lookup_range, result_range ), "" )
@@ -170,7 +163,6 @@ XLOOKUPIFERRORARRAY
  * @param {Integer} headerrow - row number of header, e.g. 1
  * @return {Array} an Array of results, one for each value in the keyrange
  */
-
 XLOOKUPIFERRORARRAYWITHHEADER
 = ARRAYFORMULA(
   IF(
@@ -189,7 +181,6 @@ XLOOKUPIFERRORARRAYWITHHEADER
  * @param {Array} attributes_range - 1-D array of attributes per entity, e.g. attributes!A:A
  * @return {Array} an Array of results, one for each value in the keyrange
  */
-
 CROSSJOIN
 = {
   TRANSPOSE( 
