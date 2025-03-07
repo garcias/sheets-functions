@@ -35,11 +35,9 @@ REPLACE_HEADER
 
 /**
  * MELT
- *   Unpivots columns and stacks them. First row of each range assumed to be headers, 
- *   which will define variable labels of values in the unpivoted columns.
- * 
- *   The TRANSPOSE-QUERY-based header-concatenation trick was inspired by Prashanth KV at: 
- *   https://infoinspired.com/google-docs/spreadsheet/unpivot-a-dataset-in-google-sheets-reverse-pivot-formula/
+ *   Unpivots columns and stacks them. First row of each range assumed to be headers; 
+ *   headers of values_range will define variable labels of values in the unpivoted columns.
+ *   This implementation is 4-6X faster than MELT_LEGACY
  * 
  * @param {Array} index_range - columns containing index values, including headers; each value in a row
  *                              will be duplicated for each variable in the row, e.g. A:B
@@ -58,6 +56,55 @@ REPLACE_HEADER
  *   "Ben",   "Brink", "leave",  "3:45 pm" }
  */
 MELT
+= LET(
+  index_rows, TRIM_HEADER( index_range, 1),
+  values_rows, TRIM_HEADER( values_range, 1),
+  num_index_rows, ROWS( index_rows ),
+  num_labels, COLUMNS( values_range ),
+  dup_index_rows, BYCOL( index_rows, LAMBDA( col,
+    FLATTEN( WRAPCOLS( FLATTEN( 
+      MAKEARRAY( num_labels, 1, LAMBDA( x, y, WRAPROWS( FLATTEN(col), num_index_rows ) ) )
+    ), num_index_rows ) )
+  ) ),
+  labels, FLATTEN( MAKEARRAY( num_index_rows, 1, 
+    LAMBDA( x, y, CHOOSEROWS( values_range, 1) ) ) 
+  ),
+  values, FLATTEN( values_rows ),
+  { 
+    CHOOSEROWS(index_range, 1), "variable", "value" ; 
+    dup_index_rows, labels, values
+  }
+)
+
+/**
+ * MELT_LEGACY
+ *   Unpivots columns and stacks them. First row of each range assumed to be headers; 
+ *   headers of values_range will define variable labels of values in the unpivoted columns.
+ * 
+ *   The TRANSPOSE-QUERY-based header-concatenation trick was inspired by Prashanth KV at: 
+ *   https://infoinspired.com/google-docs/spreadsheet/unpivot-a-dataset-in-google-sheets-reverse-pivot-formula/
+ *   
+ *   DEPRECATED. Superseded by the more performant MELT, which uses modern Sheets formulas to
+ *   implement the same functionality. Kept to remember the hacky but ingenious string construction and
+ *   manipulation methods we used to rely on for reshaping data tables.
+ * 
+ * @param {Array} index_range - columns containing index values, including headers; each value in a row
+ *                              will be duplicated for each variable in the row, e.g. A:B
+ * @param {Array} values_range - 2-D range of values under the variables_header, including headers e.g. C:N
+ * @return {Array} an Array of results, see example
+ * 
+ * @example
+ * { "first", "last",  "arrive",  "leave"   ;
+ *   "Ann",   "Allen", "8:00 am", "4:00 pm" ;
+ *   "Ben",   "Brink", "7:45 am", "3:45 pm" }
+ * MELT( A:B, C:D )
+ * { "first", "last",  "variable",  "value"   ;
+ *   "Ann",   "Allen", "arrive", "8:00 am" ;
+ *   "Ann",   "Allen", "leave",  "4:00 pm" ;
+ *   "Ben",   "Brink", "arrive", "7:45 am" ;
+ *   "Ben",   "Brink", "leave",  "3:45 pm" }
+ */
+MELT_LEGACY
 = {
   { CHOOSEROWS(index_range, 1), "variable", "value" }; 
   ARRAYFORMULA( 
@@ -176,37 +223,112 @@ XLOOKUPIFERRORARRAYWITHHEADER
 
 /**
  * CROSSJOIN
- *   Generates the Cartesian product of two arrays as a two-column array of pairs
- *   A cross join (Cartesion product) is every pairwise combination of values between two sets.
+ *   Cross joins two arrays as two columns, generating the Cartesian product (every pairwise combination 
+ *   of values between two sets). 
+ *   WARNING: sheet will start to lag if the result of this function exceeds 100,000 rows; even if as an
+ *   intermediate array that gets filtered or array-constrained before the final output
  * 
- * @param {Array} entities_range - 1-D array of entities to repeat, e.g. entities!A:A
- * @param {Array} attributes_range - 1-D array of attributes per entity, e.g. attributes!A:A
+ * @param {Array} entities_range - array of entities to repeat, e.g. entities!A:A
+ * @param {Array} attributes_range - array of attributes per entity, e.g. attributes!A:B
  * @return {Array} an Array of results, one for each value in the keyrange
  */
 CROSSJOIN
-= {
-  TRANSPOSE( 
-    SPLIT( 
-      JOIN( DELIM(), 
-        ARRAYFORMULA(
-          REPT( entities_range & DELIM(), ROWS(attributes_range) )
-        )
-      ), DELIM()
+= LET(
+  number_of_entities, rows( entities_range ),
+  number_of_attributes, rows( attributes_range ),
+  {
+    WRAPCOLS(
+      FLATTEN( 
+        MAKEARRAY( 
+          1, 
+          number_of_attributes, 
+          LAMBDA( row, col, FLATTEN(TRANSPOSE(entities_range)) ) ) 
+      ),
+      number_of_attributes * number_of_entities
+    ),
+    WRAPROWS(
+      FLATTEN(
+        MAKEARRAY( 
+          number_of_entities, 
+          1, 
+          LAMBDA( row, col, TRANSPOSE( FLATTEN(attributes_range)) ) )
+      ),
+      COLUMNS( attributes_range )
     )
-  ),
-  TRANSPOSE( 
-    SPLIT(
-      REPT(
-        JOIN( DELIM(), attributes_range ) & DELIM(), ROWS(entities_range) 
-      ), DELIM()) 
-  )
-}
+  }
+)
+
+/**
+ * INNERJOIN
+ *   Joins two tables on specified key columns; keys do not have to be unique in each column. First row 
+ *   of each range assumed to be headers. "Left" and "right" are arbitrary, but performance is better 
+ *   if left table is smaller than right table.
+ * 
+ *   WARNING: sheet will start to lag if the product of table sizes exceeds 10,000,000, even if 
+ *   the final output is only a few rows.
+ * 
+ * @param {Array} data_left  - columns of left table to join, may include key column, e.g. orders!A:C
+ * @param {Array} keys_left  - column of left table containing the keys to join on, e.g. orders!B:B
+ * @param {Array} data_right - columns of right table to join, may include key column, e.g. recipes!B:C
+ * @param {Array} keys_right - column of right table containing the keys to join on, e.g. recipes!A:A
+ * @return {Array} Array of results such that keys_left == keys_right, see example
+ * 
+ * @example
+ * on sheet named recipes
+ * { "dish",     "ingredient",  "amount" ;
+ *   "omelette", "egg",         "120 g"  ;
+ *   "pancake",  "egg",         "60 g"   ;
+ *   "pancake",  "milk",        "40 g"   ;
+ *   "pancake",  "flour",       "150 g"  ;
+ * }
+ * 
+ * on sheet named orders
+ * { "diner",    "dish",     "number" ;
+ *   "Sengupta", "omelette",    2;
+ *   "Weisz",    "omelette",    1;
+ *   "Weisz",    "pancake",     1;
+ *   "Lemmy",    "waffles",     4;
+ * }
+ * 
+ * = INNERJOIN( orders!A:C, orders!B:B, recipes!B:C, recipes!A:A )
+ * { "diner",    "dish",     "number", "ingredient",  "amount" ;
+ *   "Sengupta", "omelette",    2    , "egg",         "120 g"  ;
+ *   "Weisz",    "omelette",    1    , "egg",         "120 g"  ;
+ *   "Weisz",    "pancake",     1    , "egg",         "60 g"   ;
+ *   "Weisz",    "pancake",     1    , "milk",        "40 g"   ;
+ *   "Weisz",    "pancake",     1    , "flour",       "150 g"  ;
+ * }
+ */
+INNERJOIN
+= LET(
+  idx.lt, MAKEARRAY( ROWS( keys_left ), 1, LAMBDA( x, y, x ) ),
+  prefilter, MAP( keys_left, LAMBDA( x, 
+    IFERROR( LEN(FILTER( keys_right, keys_right = x ))>0, FALSE )
+  )),
+  id.lt, FILTER( idx.lt, prefilter ),
+  matches, MAP( id.lt, lambda( idx,
+    LET(
+      key, XLOOKUP( idx, idx.lt, keys_left ),
+      valrt, FILTER( data_right, keys_right = key ),
+      vals, BYROW( valrt, LAMBDA( row, 
+        { XLOOKUP( idx, idx.lt, data_left ), row }
+      )),
+      TRANSPOSE( FLATTEN( vals ) )
+    )
+  )),
+  wrapped, WRAPROWS( FLATTEN( matches ), COLUMNS(data_right) + COLUMNS(data_left) ),
+  notblank, FILTER( wrapped, NOT( ISBLANK( CHOOSECOLS( wrapped, 1 ) ) ) ),
+  {
+    CHOOSEROWS( data_left, 1 ), CHOOSEROWS( data_right, 1) ; 
+    TRIM_HEADER( notblank, 1 )
+  }
+)
 
 /**
  * QBN
  *   QUERY function but query string refers to columns by names enclosed in backticks ``
  * 
- *   Developed entirely by Stack Exchange user carecki (https://webapps.stackexchange.com/users/304122/carecki)
+ *   Developed by Stack Exchange user carecki (https://webapps.stackexchange.com/users/304122/carecki)
  *   https://webapps.stackexchange.com/questions/57540/can-i-use-column-headers-in-a-query/167714#167714
  * 
  * @param {Array} data - array whose first row is column headers, e.g. A:F
@@ -227,4 +349,102 @@ QBN
     )
   ) ( query_text, ARRAY_CONSTRAIN( data, 1, COLUMNS(data) ) ),
   1
+)
+
+/**
+ * TESTING 
+ *   Formulas useful for generating test data
+ */
+
+/**
+ * TESTALPHA 
+ *   random string of lower-case alphabetic characters
+ * 
+ * @param {Integer} length - length of string, e.g. 10
+ * @return {String}
+ */
+TESTALPHA
+= JOIN( "", MAKEARRAY( length, 1, LAMBDA( x, y, CHAR(RANDBETWEEN( 97, 122 )) ) ) )
+
+/**
+ * TESTASCII
+ *   random string of characters with codes 40-126 in ASCII table
+ * 
+ * @param {Integer} length - length of string
+ * @return {String}
+ */
+TESTASCII
+= JOIN( "", MAKEARRAY( length, 1, LAMBDA( x, y, CHAR(RANDBETWEEN( 40, 126 )) ) ) )
+
+/**
+ * TESTSELECT
+ *   select a value from an array at random (with replacement)
+ * 
+ * @param {Integer} options_array - array of values to select from, e.g. A1:B10
+ * @return {String}
+ */
+TESTSELECT
+= LET(
+  selection_array, FLATTEN( options_array ),
+  number_of_options, ROWS( selection_array ),
+  idx, RANDBETWEEN( 1, number_of_options ),
+  INDEX( selection_array, idx )
+)
+
+/**
+ * TESTSELECTMULTIPLE
+ *   select variable number of multiple values from an array at random
+ * 
+ * @param {Integer} options_array - array of values to select from, e.g. A1:B10
+ * @param {Integer} number_of_selections - max number to select from array, e.g. 4
+ * @return {String} - comma separated list of selected options
+ */
+TESTSELECTMULTIPLE
+= LET(
+  selections_array, MAKEARRAY( 
+    number_of_selections, 1, LAMBDA( x, y, TESTSELECT( options_array ) ) 
+  ),
+  JOIN( ", ", unique( selections_array ) )
+)
+
+
+
+IJOIN.UNIQUE
+= LET(
+  source.lt,B2:D10000,
+  source.rt,G2:J1000,
+  key.lt, B2:B10000,
+  key.rt, G2:G1000,
+  joined.rt, MAP( key.lt, LAMBDA( 
+    key, 
+    XLOOKUP( key, key.rt, source.rt ) 
+  ) ),
+  joined, FILTER( { source.lt, joined.rt }, NOT(ISNA( CHOOSECOLS(joined.rt, 1) )) ),
+  IF( 
+    ROWS( key.rt ) = ROWS( UNIQUE( key.rt) ),
+    joined,
+    "ERROR: JOIN.UNIQUE requires that the keys of the right table are unique"
+  )
+)
+
+IJOIN.UNIQUE
+= LET(
+  left_data,  B:D,
+  left_keys,  B:B,
+  right_data, G:J,
+  right_keys, G:G,
+  source.lt,  TRIM_HEADER( FILTER( left_data,  NOT(ISBLANK( left_keys  )) ), 1 ),
+  key.lt,     TRIM_HEADER( FILTER( left_keys,  NOT(ISBLANK( left_keys  )) ), 1 ),
+  source.rt,  TRIM_HEADER( FILTER( right_data, NOT(ISBLANK( right_keys )) ), 1 ),
+  key.rt,     TRIM_HEADER( FILTER( right_keys, NOT(ISBLANK( right_keys )) ), 1 ),
+  joined.rt, MAP( key.lt, LAMBDA( 
+    key, 
+    XLOOKUP( key, key.rt, source.rt ) 
+  ) ),
+  joined, FILTER( { source.lt, joined.rt }, NOT(ISNA( CHOOSECOLS(joined.rt, 1) )) ),
+  IF( 
+    ROWS( key.rt ) = ROWS( UNIQUE( key.rt) ),
+    joined,
+    "ERROR: JOIN.UNIQUE requires that the keys of the right table are unique"
+  )
 )
