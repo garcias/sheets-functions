@@ -5,6 +5,13 @@ I love Google Apps Script, but I prefer Named Functions when possible to impleme
 
 Current version of spreadsheet with all my current functions already entered: [functions](https://docs.google.com/spreadsheets/d/1uKanNWKZL3UArI1A14LXNM86qqZTSVQ42ngvg9emCjY/template/preview)
 
+## Featured functions
+
+- `CROSSJOIN`. Cartesian product of two tables. 
+- `MELT`. Unpivot selected columns of a wide table, creating a "tall and thin" version with the same data.
+- `INNERJOIN`. Join two tables on keys, even if key values are not unique in either table.
+- `QBN`. Like QUERY, but you refer to each column by its heading instead of "A", "B", etc. Developed by Stack Exchange user [carecki](https://webapps.stackexchange.com/questions/57540/can-i-use-column-headers-in-a-query/167714#167714).
+
 ## Specify each Named Function in a consistent way
 
 I tend to follow JavasScript-like conventions (e.g., indentation and bracket alignment) when writing a Named Function. Therefore I define them in this repo as files with `.js` extensions, and I use JSDoc-like syntax to indicate the name of the function and to describe its parameters. Different parts of the definition need to be translated to the Named Functions interface in Sheets. Consider the example below for the function `XLOOKUPIFERRORARRAY`.
