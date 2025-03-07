@@ -45,7 +45,7 @@ To create this Named Function in the Google Sheets user interface:
 
 On a roll! And I finally achieved a holy grail of Google Sheets array manipulation: a generic, *symmetrical*, *performant* implementation of an inner join on *foreign* keys. It will correctly duplicate rows from either the left or right table as needed, and will omit rows where no match is found on the key. The implementation is surprisingly fast, I don't see lagging until I get to computing 10^7 cells (`ARRAY_CONSTRAIN`ed). Performance is best when the left table is shorter than the right table.
 
-Of course this isn't as nice as having joins defined and optimized in the Google Visualization Query language, but since that's not an option, we have to join two tables first and then wrap it in a `QUERY` formula to get more precisely what we want. 
+Of course this isn't as nice as having joins defined and optimized in the Google Visualization Query language, this is just for relatively simple tasks, where you join two tables first and then wrap it in a `QUERY` formula to get more precisely what you want. If you need more complex queries in Google Sheets, and you're able to use Apps Script functions in your situation, then check out the [gsSQL project](https://github.com/demmings/gsSQL) at https://github.com/demmings/gsSQL.
 
 My next goal is to implement a left join, for cases where I need to see unmatched rows in a given table. I suspect this will be a little slower, but we'll see ...
 
