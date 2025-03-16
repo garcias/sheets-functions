@@ -48,6 +48,10 @@ To create this Named Function in the Google Sheets user interface:
 
 ## Change log
 
+### 2025-03-16: Update testing functions to be array based
+
+I updated the testing functions so they generate arrays of sample values at a time, because most of my testing is on array formulas. Each can still generate a single random value by setting the desired dimensions as 1 row, 1 column. They are named `TESTALPHAARRAY`, `TESTASCIIARRAY`, `TESTSELECTARRAY`, `TESTSELECTMULTIPLEARRAY`.
+
 ### 2025-03-07: New formula INNERJOIN
 
 On a roll! And I finally achieved a holy grail of Google Sheets array manipulation: a generic, *symmetrical*, *performant* implementation of an inner join on *foreign* keys. It will correctly duplicate rows from either the left or right table as needed, and will omit rows where no match is found on the key. The implementation is surprisingly fast, I don't see lagging until I get to computing 10^7 cells (`ARRAY_CONSTRAIN`ed). Performance is best when the left table is shorter than the right table.

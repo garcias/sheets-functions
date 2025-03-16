@@ -357,55 +357,78 @@ QBN
  */
 
 /**
- * TESTALPHA 
- *   random string of lower-case alphabetic characters
+ * TESTALPHAARRAY
+ *   generate array of random strings of lower-case alphabetic characters
  * 
- * @param {Integer} length - length of string, e.g. 10
- * @return {String}
+ * @param {Integer} nrows    - height of array to generate
+ * @param {Integer} ncolumns - width of array to generate
+ * @param {Integer} length  - length of string
+ * @return {Array}
  */
-TESTALPHA
-= JOIN( "", MAKEARRAY( length, 1, LAMBDA( x, y, CHAR(RANDBETWEEN( 97, 122 )) ) ) )
+TESTALPHAARRAY
+= MAKEARRAY( nrows, ncolumns, LAMBDA( x, y,
+  JOIN( "", MAKEARRAY( length, 1, LAMBDA( x, y, CHAR(RANDBETWEEN( 97, 122 )) ) ) )
+) )
 
 /**
- * TESTASCII
- *   random string of characters with codes 40-126 in ASCII table
+ * TESTASCIIARRAY
+ *   generate array of random strings of characters with codes 40-126 in ASCII table
  * 
- * @param {Integer} length - length of string
- * @return {String}
+ * @param {Integer} nrows    - height of array to generate
+ * @param {Integer} ncolumns - width of array to generate
+ * @param {Integer} length  - length of string
+ * @return {Array}
  */
-TESTASCII
-= JOIN( "", MAKEARRAY( length, 1, LAMBDA( x, y, CHAR(RANDBETWEEN( 40, 126 )) ) ) )
+TESTASCIIARRAY
+= MAKEARRAY( nrows, ncolumns, LAMBDA( x, y,
+  JOIN( "", MAKEARRAY( length, 1, LAMBDA( x, y, CHAR(RANDBETWEEN( 40, 126 )) ) ) )
+) )
 
 /**
- * TESTSELECT
- *   select a value from an array at random (with replacement)
+ * TESTSELECTARRAY
+ *   generate array of values selected randomly from an array of options (with replacement)
  * 
- * @param {Integer} options_array - array of values to select from, e.g. A1:B10
- * @return {String}
+ * @param {Integer} nrows    - height of array to generate
+ * @param {Integer} ncolumns - width of array to generate
+ * @param {Array} options_array - array of values to select from, e.g. A1:B10
+ * @return {Array}
  */
-TESTSELECT
-= LET(
-  selection_array, FLATTEN( options_array ),
-  number_of_options, ROWS( selection_array ),
-  idx, RANDBETWEEN( 1, number_of_options ),
-  INDEX( selection_array, idx )
-)
+TESTSELECTARRAY
+= MAKEARRAY( nrows, ncolumns, LAMBDA( x, y,
+  LET(
+    selection_array, FLATTEN( options_array ),
+    number_of_options, ROWS( selection_array ),
+    idx, RANDBETWEEN( 1, number_of_options ),
+    INDEX( selection_array, idx )
+  )
+) )
 
 /**
- * TESTSELECTMULTIPLE
- *   select variable number of multiple values from an array at random
+ * TESTSELECTMULTIPLEARRAY
+ *   generate array of multiple unique values selected randomly from an array of options
  * 
- * @param {Integer} options_array - array of values to select from, e.g. A1:B10
+ * @param {Integer} nrows    - height of array to generate
+ * @param {Integer} ncolumns - width of array to generate
+ * @param {Array} options_array - array of values to select from, e.g. A1:B10
  * @param {Integer} number_of_selections - max number to select from array, e.g. 4
- * @return {String} - comma separated list of selected options
+ * @return {Array} - each value is a string formed as comma separated list of selected options
  */
-TESTSELECTMULTIPLE
-= LET(
-  selections_array, MAKEARRAY( 
-    number_of_selections, 1, LAMBDA( x, y, TESTSELECT( options_array ) ) 
-  ),
-  JOIN( ", ", unique( selections_array ) )
-)
+TESTSELECTMULTIPLEARRAY
+= MAKEARRAY( nrows, ncolumns, LAMBDA( x, y,
+  LET(
+    selections_array, MAKEARRAY( 
+      number_of_selections, 1, LAMBDA( x, y, TESTSELECTARRAY( 1, 1, options_array ) ) 
+    ),
+    JOIN( ", ", unique( selections_array ) )
+  )
+) )
+
+= MAKEARRAY( nrows, ncolumns, LAMBDA( x, y,
+  LET(
+    selections_array, TESTSELECTARRAY( number_of_selections, 1, options_array ),
+    JOIN( ", ", unique( selections_array ) )
+  )
+) )
 
 
 
