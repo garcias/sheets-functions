@@ -48,6 +48,16 @@ To create this Named Function in the Google Sheets user interface:
 
 ## Change log
 
+### 2025-03-18: Update INNERJOIN for 2X speed improvement
+
+Overall algorithm still the same, I just found three slight changes would enhance performance by a factor of 2X:
+
+- Use `SEQUENCE` to generate the index for left table.
+- Use `MATCH` to more quickly identify left keys that exist in right keys, and thus build the prefilter.
+- Prefilter both the left index and left keys, and pass both to `MAP` to allow for parallel iteration (and thus saves us from a costly lookup of each key value).
+
+It's too bad we couldn't also pass the entire left table for parallel iteration, but unfortunately `MAP` sees that multi-column array as different size from the key column array, even though they're the same height.
+
 ### 2025-03-16: Update testing functions to be array based
 
 I updated the testing functions so they generate arrays of sample values at a time, because most of my testing is on array formulas. Each can still generate a single random value by setting the desired dimensions as 1 row, 1 column. They are named `TESTALPHAARRAY`, `TESTASCIIARRAY`, `TESTSELECTARRAY`, `TESTSELECTMULTIPLEARRAY`.

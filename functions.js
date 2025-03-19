@@ -264,8 +264,8 @@ CROSSJOIN
  *   of each range assumed to be headers. "Left" and "right" are arbitrary, but performance is better 
  *   if left table is smaller than right table.
  * 
- *   WARNING: sheet will start to lag if the product of table sizes exceeds 10,000,000, even if 
- *   the final output is only a few rows.
+ *   WARNING: sheet will start to lag if the product of table sizes exceeds 20,000,000, even if 
+ *   the final output is only a few rows due to QUERY, FILTER, or ARRAY_CONSTRAIN.
  * 
  * @param {Array} data_left  - columns of left table to join, may include key column, e.g. orders!A:C
  * @param {Array} keys_left  - column of left table containing the keys to join on, e.g. orders!B:B
@@ -301,23 +301,21 @@ CROSSJOIN
  */
 INNERJOIN
 = LET(
-  idx.lt, MAKEARRAY( ROWS( keys_left ), 1, LAMBDA( x, y, x ) ),
-  prefilter, MAP( keys_left, LAMBDA( x, 
-    IFERROR( LEN(FILTER( keys_right, keys_right = x ))>0, FALSE )
-  )),
-  id.lt, FILTER( idx.lt, prefilter ),
-  matches, MAP( id.lt, lambda( idx,
+  index_left, SEQUENCE( ROWS( keys_left ) ),
+  prefilter, ARRAYFORMULA( MATCH( keys_left, keys_right, 0 ) ),
+  index_left_filtered, FILTER( index_left, prefilter ),
+  keys_left_filtered, FILTER( keys_left, prefilter ),
+  matches, MAP( index_left_filtered, keys_left_filtered, LAMBDA( id_left, key_left,
     LET(
-      key, XLOOKUP( idx, idx.lt, keys_left ),
-      valrt, FILTER( data_right, keys_right = key ),
-      vals, BYROW( valrt, LAMBDA( row, 
-        { XLOOKUP( idx, idx.lt, data_left ), row }
-      )),
-      TRANSPOSE( FLATTEN( vals ) )
+      row_left, XLOOKUP( id_left, index_left, data_left ),
+      matches_right, FILTER( data_right, keys_right = key_left ),
+      TOROW( BYROW( matches_right, LAMBDA( row_right,
+        HSTACK( row_left, row_right )
+      ) ) )
     )
-  )),
-  wrapped, WRAPROWS( FLATTEN( matches ), COLUMNS(data_right) + COLUMNS(data_left) ),
-  notblank, FILTER( wrapped, NOT( ISBLANK( CHOOSECOLS( wrapped, 1 ) ) ) ),
+  ) ),
+  wrapped, WRAPROWS( FLATTEN(matches), COLUMNS(data_right) + COLUMNS(data_left) ),
+  notblank, FILTER( wrapped, NOT(ISBLANK(CHOOSECOLS(wrapped, 1))) ),
   {
     CHOOSEROWS( data_left, 1 ), CHOOSEROWS( data_right, 1) ; 
     TRIM_HEADER( notblank, 1 )
@@ -471,3 +469,26 @@ IJOIN.UNIQUE
     "ERROR: JOIN.UNIQUE requires that the keys of the right table are unique"
   )
 )
+
+
+/**
+ * I have developed a general-purpose Named Function to implement inner joins in Google Sheets. In particular I want to 
+ * avoid anything that relies on approaches that serialize arrays to strings, manipulate the strings, and then deserialize
+ * (e.g., JOIN-REPT-SPLIT type of formulas). I also want to avoid Apps Script (I love it, but even optimized functions lag on
+ * array-type computations). 
+ * 
+ * The formula below takes four arrays as input. data_left is the left table, which can be multiple columns. keys_left is a 
+ * single-column array of keys for the left table. data_left can include the keys column. data_right and keys_right are similar 
+ * for the right table. The keys in each table don't have to be unique. Each array should have a heading in the single-row, which
+ * the formula will ignore.
+ * The resulting array will contain the columns of both data_left and data_right, and insert the corresponding column headings.
+ * The performance is pretty good ... I can get up to 10^6 output cells before I even notice any lag.
+ * 
+ * In your example, let's assume table A is in TableA!A2:B4, table B is in TableB!A2:B6, and that you put headings into row 1
+ * If you enter this as a named function, you would use it as such:
+ * = CROSSJOIN( TableA!A:B, TableA!B:B, TableB!A:B, TableB!A:A )
+ * https://stackoverflow.com/questions/65809201/inner-join-in-google-spreadsheets
+ * 
+ * It's good practice on StackOverflow to explain the answer, so below I will give a brief overview. I plan to write up 
+ * something more detailed on my GitHub repo, 
+ */ 

@@ -7,7 +7,7 @@ I learned a lot of formula tricks through StackOverflow, so I should try to give
 
 I posted the following question to StackOverflow, and made up a toy example. 
 
-(Although I implied I was looking for a generalizable solution, I learned that most responders will focus on the example, so in the future I'll need to specify that as a criterion of the desired answer. I ended up editing such answers to generalize them, or posting my own answers to build upon a more specific answer.)
+(Although I implied I was looking for a generalizable solution, I learned that most responders will focus on the example, so in the future I'll need to specify generality as a criterion of the desired answer. I ended up editing such answers to generalize them, or posting my own answers to build upon a more specific answer.)
 
 ### Question: How do I cross join two, multi-column tables in Google Sheets — without string hacking or Apps Script?
 
