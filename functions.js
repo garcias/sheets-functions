@@ -323,6 +323,66 @@ INNERJOIN
 )
 
 /**
+ * LEFTJOIN
+ *   Joins two tables on specified key columns; keys do not have to be unique in each column. First row 
+ *   of each range assumed to be headers. "Left" and "right" are NOT arbitrary; rows in the left table 
+ *   with no matches will still appear in the resulting array, with blank cells to the right. In this context,
+ *   "blank" means IF(TRUE,) rather than "".
+ *   
+ *   WARNING: sheet will start to lag if the product of table sizes exceeds 20,000,000, even if 
+ *   the final output is only a few rows due to QUERY, FILTER, or ARRAY_CONSTRAIN.
+ * 
+ * @param {Array} data_left  - columns of left table to join, may include key column, e.g. orders!A:C
+ * @param {Array} keys_left  - column of left table containing the keys to join on, e.g. orders!B:B
+ * @param {Array} data_right - columns of right table to join, may include key column, e.g. recipes!B:C
+ * @param {Array} keys_right - column of right table containing the keys to join on, e.g. recipes!A:A
+ * @return {Array} Array of results such that keys_left == keys_right, see example
+ * 
+ * @example
+ * on sheet named orders
+ * { { "diner",    "dish",     "number"  } ;
+ *   { "Sengupta", "omelette",    2      } ;
+ *   { "Weisz",    "omelette",    1      } ;
+ *   { "Weisz",    "pancake",     1      } ;
+ *   { "Lemmy",    "waffles",     4      } }
+ * 
+ * on sheet named recipes
+ * { { "dish",     "ingredient",  "amount" } ;
+ *   { "omelette", "egg",         "120 g"  } ;
+ *   { "pancake",  "egg",         "60 g"   } ;
+ *   { "pancake",  "milk",        "40 g"   } ;
+ *   { "pancake",  "flour",       "150 g"  } }
+ * 
+ * = LEFTJOIN( orders!A:C, orders!B:B, recipes!B:C, recipes!A:A )
+ * { { "diner",    "dish",     "number", "ingredient",  "amount"  } ;
+ *   { "Sengupta", "omelette",    2    , "egg"       ,  "120 g"   } ;
+ *   { "Weisz",    "omelette",    1    , "egg"       ,  "120 g"   } ;
+ *   { "Weisz",    "pancake",     1    , "egg"       ,  "60 g"    } ;
+ *   { "Weisz",    "pancake",     1    , "milk"      ,  "40 g"    } ;
+ *   { "Weisz",    "pancake",     1    , "flour"     ,  "150 g"   } ;
+ *   { "Lemmy",    "waffles",     4    , IF(TRUE,)   ,  IF(TRUE,) } }
+ */
+LEFTJOIN
+= LET(
+  index_left, SEQUENCE( ROWS( keys_left ) ),
+  matches, MAP( index_left, keys_left, LAMBDA( id_left, key_left,
+    LET(
+      row_left, XLOOKUP( id_left, index_left, data_left ),
+      matches_right, IFERROR( FILTER( data_right, keys_right = key_left ), ),
+      TOROW( BYROW( matches_right, LAMBDA( row_right,
+        HSTACK( row_left, row_right )
+      ) ) )
+    )
+  ) ),
+  wrapped, WRAPROWS( FLATTEN(matches), COLUMNS(data_right) + COLUMNS(data_left) ),
+  notblank, FILTER( wrapped, NOT(ISBLANK(CHOOSECOLS(wrapped, 1))) ),
+  {
+    CHOOSEROWS( data_left, 1 ), CHOOSEROWS( data_right, 1) ; 
+    TRIM_HEADER( notblank, 1 )
+  }
+)
+
+/**
  * QBN
  *   QUERY function but query string refers to columns by names enclosed in backticks ``
  * 
