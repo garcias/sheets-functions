@@ -274,30 +274,27 @@ CROSSJOIN
  * @return {Array} Array of results such that keys_left == keys_right, see example
  * 
  * @example
- * on sheet named recipes
- * { "dish",     "ingredient",  "amount" ;
- *   "omelette", "egg",         "120 g"  ;
- *   "pancake",  "egg",         "60 g"   ;
- *   "pancake",  "milk",        "40 g"   ;
- *   "pancake",  "flour",       "150 g"  ;
- * }
+  * on sheet named orders
+ * { { "diner",    "dish",     "number"  } ;
+ *   { "Sengupta", "omelette",    2      } ;
+ *   { "Weisz",    "omelette",    1      } ;
+ *   { "Weisz",    "pancake",     1      } ;
+ *   { "Lemmy",    "waffles",     4      } }
  * 
- * on sheet named orders
- * { "diner",    "dish",     "number" ;
- *   "Sengupta", "omelette",    2;
- *   "Weisz",    "omelette",    1;
- *   "Weisz",    "pancake",     1;
- *   "Lemmy",    "waffles",     4;
- * }
+ * on sheet named recipes
+ * { { "dish",     "ingredient",  "amount" } ;
+ *   { "omelette", "egg",         "120 g"  } ;
+ *   { "pancake",  "egg",         "60 g"   } ;
+ *   { "pancake",  "milk",        "40 g"   } ;
+ *   { "pancake",  "flour",       "150 g"  } }
  * 
  * = INNERJOIN( orders!A:C, orders!B:B, recipes!B:C, recipes!A:A )
- * { "diner",    "dish",     "number", "ingredient",  "amount" ;
- *   "Sengupta", "omelette",    2    , "egg",         "120 g"  ;
- *   "Weisz",    "omelette",    1    , "egg",         "120 g"  ;
- *   "Weisz",    "pancake",     1    , "egg",         "60 g"   ;
- *   "Weisz",    "pancake",     1    , "milk",        "40 g"   ;
- *   "Weisz",    "pancake",     1    , "flour",       "150 g"  ;
- * }
+ * { { "diner",    "dish",     "number", "ingredient",  "amount"  } ;
+ *   { "Sengupta", "omelette",    2    , "egg"       ,  "120 g"   } ;
+ *   { "Weisz",    "omelette",    1    , "egg"       ,  "120 g"   } ;
+ *   { "Weisz",    "pancake",     1    , "egg"       ,  "60 g"    } ;
+ *   { "Weisz",    "pancake",     1    , "milk"      ,  "40 g"    } ;
+ *   { "Weisz",    "pancake",     1    , "flour"     ,  "150 g"   } }
  */
 INNERJOIN
 = LET(
