@@ -48,6 +48,15 @@ To create this Named Function in the Google Sheets user interface:
 
 ## Change log
 
+### 2025-04-11: New formula LEFTJOIN
+
+Add `LEFTJOIN` for situations where you need to retain rows in the left table even if the key has no match in the right table. As with `INNERJOIN`, it will correctly duplicate rows when a key has multiple matches. The implementation follows the same structure as `INNERJOIN`, except for a few changes:
+
+- Create a temporary, primary-key array to index the left table, so that you can retrieve rows from it later
+- We don't want to prefilter the left index
+- If a left-table row's key has no matches in the right table, we still want to concatenate the row with a blank cell (not empty string ""). Do this using `IFERROR` with the second parameter empty.
+
+
 ### 2025-03-18: Update INNERJOIN for 2X speed improvement
 
 Overall algorithm still the same, I just found three slight changes would enhance performance by a factor of 2X:
@@ -58,9 +67,11 @@ Overall algorithm still the same, I just found three slight changes would enhanc
 
 It's too bad we couldn't also pass the entire left table for parallel iteration, but unfortunately `MAP` sees that multi-column array as different size from the key column array, even though they're the same height.
 
+
 ### 2025-03-16: Update testing functions to be array based
 
 I updated the testing functions so they generate arrays of sample values at a time, because most of my testing is on array formulas. Each can still generate a single random value by setting the desired dimensions as 1 row, 1 column. They are named `TESTALPHAARRAY`, `TESTASCIIARRAY`, `TESTSELECTARRAY`, `TESTSELECTMULTIPLEARRAY`.
+
 
 ### 2025-03-07: New formula INNERJOIN
 
@@ -82,11 +93,13 @@ A few tricks were necessary to make `INNERJOIN` work accurately and quickly:
 
 **TIL.** `XLOOKUP` can return an array, if you specify the `result_range` as a multiple-column array! (But this behavior is unpredictable if you put `XLOOKUP` into an `ARRAYFORMULA`, which limits its usefulness.)
 
+
 ### 2025-03-07: Update MELT
 
 I learned a lot from rewriting `CROSSJOIN` that looked immediately applicable to `MELT`. The new version is much more performant, and runs 4-6X faster than the previous version. I was able to melt a 10^5 row x 10 column array with just a slight lag (the result was `ARRAY_CONSTRAINED`, or else it would need more rows to be created to accommodate the output). It's difficult to test beyond that because creating 10^6 rows makes the sheet laggy all on its own, even without computing formulas.
 
 Out of nostalgia and respect, I kept the old version and renamed it `MELT_LEGACY`. I think it's important to acknowledge and remember the hacky but ingenious strategies we used to rely on, and which enabled people to do amazing things despite the enterprise environments that restricted use of SQL, jq, Python, and other tools. I also wanted to retain a memory of how much people relied on each other for ideas, like the brilliant header-concatenation trick I learned from Prashanth KV over at Info Inspired.
+
 
 ### 2025-03-05: Update CROSSJOIN
 
