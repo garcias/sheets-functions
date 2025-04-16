@@ -267,10 +267,10 @@ CROSSJOIN
  *   WARNING: sheet will start to lag if the product of table sizes exceeds 20,000,000, even if 
  *   the final output is only a few rows due to QUERY, FILTER, or ARRAY_CONSTRAIN.
  * 
- * @param {Array} data_left  - columns of left table to join, may include key column, e.g. orders!A:C
- * @param {Array} keys_left  - column of left table containing the keys to join on, e.g. orders!B:B
- * @param {Array} data_right - columns of right table to join, may include key column, e.g. recipes!B:C
- * @param {Array} keys_right - column of right table containing the keys to join on, e.g. recipes!A:A
+ * @param {Array} data_left_lbl  - columns of left table to join, may include key column, e.g. orders!A:C
+ * @param {Array} keys_left_lbl  - column of left table containing the keys to join on, e.g. orders!B:B
+ * @param {Array} data_right_lbl - columns of right table to join, may include key column, e.g. recipes!B:C
+ * @param {Array} keys_right_lbl - column of right table containing the keys to join on, e.g. recipes!A:A
  * @return {Array} Array of results such that keys_left == keys_right, see example
  * 
  * @example
@@ -298,6 +298,8 @@ CROSSJOIN
  */
 INNERJOIN
 = LET(
+  data_left, TRIM_HEADER(data_left_lbl,1), data_right, TRIM_HEADER(data_right_lbl,1),
+  keys_left, TRIM_HEADER(keys_left_lbl,1), keys_right, TRIM_HEADER(keys_right_lbl,1),
   index_left, SEQUENCE( ROWS( keys_left ) ),
   prefilter, ARRAYFORMULA( MATCH( keys_left, keys_right, 0 ) ),
   index_left_filtered, FILTER( index_left, prefilter ),
@@ -313,10 +315,7 @@ INNERJOIN
   ) ),
   wrapped, WRAPROWS( FLATTEN(matches), COLUMNS(data_right) + COLUMNS(data_left) ),
   notblank, FILTER( wrapped, NOT(ISBLANK(CHOOSECOLS(wrapped, 1))) ),
-  {
-    CHOOSEROWS( data_left, 1 ), CHOOSEROWS( data_right, 1) ; 
-    TRIM_HEADER( notblank, 1 )
-  }
+  { CHOOSEROWS( data_left_lbl, 1 ), CHOOSEROWS( data_right_lbl, 1); notblank }
 )
 
 /**
@@ -329,10 +328,10 @@ INNERJOIN
  *   WARNING: sheet will start to lag if the product of table sizes exceeds 20,000,000, even if 
  *   the final output is only a few rows due to QUERY, FILTER, or ARRAY_CONSTRAIN.
  * 
- * @param {Array} data_left  - columns of left table to join, may include key column, e.g. orders!A:C
- * @param {Array} keys_left  - column of left table containing the keys to join on, e.g. orders!B:B
- * @param {Array} data_right - columns of right table to join, may include key column, e.g. recipes!B:C
- * @param {Array} keys_right - column of right table containing the keys to join on, e.g. recipes!A:A
+ * @param {Array} data_left_lbl  - columns of left table to join, may include key column, e.g. orders!A:C
+ * @param {Array} keys_left_lbl  - column of left table containing the keys to join on, e.g. orders!B:B
+ * @param {Array} data_right_lbl - columns of right table to join, may include key column, e.g. recipes!B:C
+ * @param {Array} keys_right_lbl - column of right table containing the keys to join on, e.g. recipes!A:A
  * @return {Array} Array of results such that keys_left == keys_right, see example
  * 
  * @example
@@ -361,6 +360,8 @@ INNERJOIN
  */
 LEFTJOIN
 = LET(
+  data_left, TRIM_HEADER(data_left_lbl,1), data_right, TRIM_HEADER(data_right_lbl,1),
+  keys_left, TRIM_HEADER(keys_left_lbl,1), keys_right, TRIM_HEADER(keys_right_lbl,1),
   index_left, SEQUENCE( ROWS( keys_left ) ),
   matches, MAP( index_left, keys_left, LAMBDA( id_left, key_left,
     LET(
@@ -373,10 +374,7 @@ LEFTJOIN
   ) ),
   wrapped, WRAPROWS( FLATTEN(matches), COLUMNS(data_right) + COLUMNS(data_left) ),
   notblank, FILTER( wrapped, NOT(ISBLANK(CHOOSECOLS(wrapped, 1))) ),
-  {
-    CHOOSEROWS( data_left, 1 ), CHOOSEROWS( data_right, 1) ; 
-    TRIM_HEADER( notblank, 1 )
-  }
+  { CHOOSEROWS( data_left_lbl, 1 ), CHOOSEROWS( data_right_lbl, 1) ; notblank }
 )
 
 /**
@@ -484,68 +482,3 @@ TESTSELECTMULTIPLEARRAY
     JOIN( ", ", unique( selections_array ) )
   )
 ) )
-
-
-
-IJOIN.UNIQUE
-= LET(
-  source.lt,B2:D10000,
-  source.rt,G2:J1000,
-  key.lt, B2:B10000,
-  key.rt, G2:G1000,
-  joined.rt, MAP( key.lt, LAMBDA( 
-    key, 
-    XLOOKUP( key, key.rt, source.rt ) 
-  ) ),
-  joined, FILTER( { source.lt, joined.rt }, NOT(ISNA( CHOOSECOLS(joined.rt, 1) )) ),
-  IF( 
-    ROWS( key.rt ) = ROWS( UNIQUE( key.rt) ),
-    joined,
-    "ERROR: JOIN.UNIQUE requires that the keys of the right table are unique"
-  )
-)
-
-IJOIN.UNIQUE
-= LET(
-  left_data,  B:D,
-  left_keys,  B:B,
-  right_data, G:J,
-  right_keys, G:G,
-  source.lt,  TRIM_HEADER( FILTER( left_data,  NOT(ISBLANK( left_keys  )) ), 1 ),
-  key.lt,     TRIM_HEADER( FILTER( left_keys,  NOT(ISBLANK( left_keys  )) ), 1 ),
-  source.rt,  TRIM_HEADER( FILTER( right_data, NOT(ISBLANK( right_keys )) ), 1 ),
-  key.rt,     TRIM_HEADER( FILTER( right_keys, NOT(ISBLANK( right_keys )) ), 1 ),
-  joined.rt, MAP( key.lt, LAMBDA( 
-    key, 
-    XLOOKUP( key, key.rt, source.rt ) 
-  ) ),
-  joined, FILTER( { source.lt, joined.rt }, NOT(ISNA( CHOOSECOLS(joined.rt, 1) )) ),
-  IF( 
-    ROWS( key.rt ) = ROWS( UNIQUE( key.rt) ),
-    joined,
-    "ERROR: JOIN.UNIQUE requires that the keys of the right table are unique"
-  )
-)
-
-
-/**
- * I have developed a general-purpose Named Function to implement inner joins in Google Sheets. In particular I want to 
- * avoid anything that relies on approaches that serialize arrays to strings, manipulate the strings, and then deserialize
- * (e.g., JOIN-REPT-SPLIT type of formulas). I also want to avoid Apps Script (I love it, but even optimized functions lag on
- * array-type computations). 
- * 
- * The formula below takes four arrays as input. data_left is the left table, which can be multiple columns. keys_left is a 
- * single-column array of keys for the left table. data_left can include the keys column. data_right and keys_right are similar 
- * for the right table. The keys in each table don't have to be unique. Each array should have a heading in the single-row, which
- * the formula will ignore.
- * The resulting array will contain the columns of both data_left and data_right, and insert the corresponding column headings.
- * The performance is pretty good ... I can get up to 10^6 output cells before I even notice any lag.
- * 
- * In your example, let's assume table A is in TableA!A2:B4, table B is in TableB!A2:B6, and that you put headings into row 1
- * If you enter this as a named function, you would use it as such:
- * = CROSSJOIN( TableA!A:B, TableA!B:B, TableB!A:B, TableB!A:A )
- * https://stackoverflow.com/questions/65809201/inner-join-in-google-spreadsheets
- * 
- * It's good practice on StackOverflow to explain the answer, so below I will give a brief overview. I plan to write up 
- * something more detailed on my GitHub repo, 
- */ 
