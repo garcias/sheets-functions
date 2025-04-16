@@ -3,13 +3,13 @@
 I learned a lot of formula tricks through StackOverflow, so I should try to give back when possible.
 
 
-## How do I cross join two, multi-column tables in Google Sheets — without string hacking or Apps Script?
+# How do I cross join two, multi-column tables in Google Sheets — without string hacking or Apps Script?
 
 I posted the following question to StackOverflow, and made up a toy example. 
 
 (Although I implied I was looking for a generalizable solution, I learned that most responders will focus on the example, so in the future I'll need to specify generality as a criterion of the desired answer. I ended up editing such answers to generalize them, or posting my own answers to build upon a more specific answer.)
 
-### Question: How do I cross join two, multi-column tables in Google Sheets — without string hacking or Apps Script?
+## Question: How do I cross join two, multi-column tables in Google Sheets — without string hacking or Apps Script?
 
 [https://stackoverflow.com/q/79505084](https://stackoverflow.com/q/79505084)
 
@@ -60,11 +60,11 @@ This question *might* be similar, but I can't tell because the OP did not includ
 - [Google Sheets Cross Join Function Tables with More than Two Columns](https://stackoverflow.com/questions/60572866/google-sheets-cross-join-function-tables-with-more-than-two-columns)
 
 
-### Answers
+## Answers
 
 Almost immediately, a couple people proposed clever solutions, and I learned something new from each of them.
 
-#### PatrickdC's answer
+### PatrickdC's answer
 
 [PatrickdC's answer](https://stackoverflow.com/a/79505103) used `HSTACK` on each combination of rows from each table to accomplish the horizontal concatenation. (My method does concatenation at the end.) 
 
