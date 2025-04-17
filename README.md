@@ -1,18 +1,27 @@
 # sheets-functions
 Google Sheets named functions that I find really handy for managing data
 
-I love Google Apps Script, but I prefer Named Functions when possible to implement custom operations in Sheets. In my anecdotal experience, even the hackiest combination of nested `ARRAYFORMULA`s and `QUERY`s will be more performant than a well-designed Apps Script function; and won't present uncertainities or confusion with authorization. I store all my favorite Named functions in a Google Sheet named "functions" and then import functions in new sheets as needed.
+I love Google Apps Script, but I prefer Named Functions when possible to implement custom operations in Sheets. In my anecdotal experience, even the hackiest combination of nested `ARRAYFORMULA`s and `QUERY`s will be more performant than a well-designed Apps Script function; and won't present uncertainities or confusion with authorization. 
 
-Current version of spreadsheet with all my current functions already entered: [functions](https://docs.google.com/spreadsheets/d/1uKanNWKZL3UArI1A14LXNM86qqZTSVQ42ngvg9emCjY/template/preview)
+- [Spreadsheet](#spreadsheet)
+- [Featured functions](#featured-functions)
+- [Document Named Functions](#document-named-functions-in-a-consistent-way)
+- [Change log](#change-log)
+
+## Spreadsheet
+
+I store all my favorite Named functions in a public Google Sheet named "[functions](https://docs.google.com/spreadsheets/d/1uKanNWKZL3UArI1A14LXNM86qqZTSVQ42ngvg9emCjY/template/preview)" and then import functions in new sheets as needed.
+
 
 ## Featured functions
 
-- `CROSSJOIN`. Cartesian product of two tables. 
+- `INNERJOIN`. Join two tables on keys that exist in both, even if key values are not unique in either table.
+- `LEFTJOIN`. Join two tables on keys that exist in one table, even if key values are not unique in either table.
 - `MELT`. Unpivot selected columns of a wide table, creating a "tall and thin" version with the same data.
-- `INNERJOIN`. Join two tables on keys, even if key values are not unique in either table.
+- `CROSSJOIN`. Cartesian product of two tables. 
 - `QBN`. Like QUERY, but you refer to each column by its heading instead of "A", "B", etc. Developed by Stack Exchange user [carecki](https://webapps.stackexchange.com/questions/57540/can-i-use-column-headers-in-a-query/167714#167714).
 
-## Specify each Named Function in a consistent way
+## Document Named Functions in a consistent way
 
 I tend to follow JavasScript-like conventions (e.g., indentation and bracket alignment) when writing a Named Function. Therefore I define them in this repo as files with `.js` extensions, and I use JSDoc-like syntax to indicate the name of the function and to describe its parameters. Different parts of the definition need to be translated to the Named Functions interface in Sheets. Consider the example below for the function `XLOOKUPIFERRORARRAY`.
 
@@ -47,6 +56,11 @@ To create this Named Function in the Google Sheets user interface:
 
 
 ## Change log
+
+### 2025-04-16: Fix bug in which INNERJOIN and LEFTJOIN would treat headers as matchable rows
+
+Previously, `INNERJOIN` and `LEFTJOIN` assumed that the first row of each array contained headers. The join operation would include them, but in the resulting array I just replaced the first row explicitly with the correct headers. But if any value in a key array was the same as the first row (header), then it would generate erroneous duplicates in the resulting data. So now I `TRIM_HEADER` the input arrays before doing the join.
+
 
 ### 2025-04-11: New formula LEFTJOIN
 
