@@ -386,7 +386,7 @@ LEFTJOIN
  * 
  * @param {Array} data - array whose first row is column headers, e.g. A:F
  * @param {String} query_text - query that refers to column headers in backticks
- *                              e.g. "select `last`, `first` where `reported age` > 30"
+ *                              e.g. "SELECT `last`, `first` WHERE `reported age` > 30"
  * @return {Array}
  */
 QBN
