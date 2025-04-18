@@ -20,6 +20,7 @@ I store all my favorite Named functions in a public Google Sheet named "[functio
 - `MELT`. Unpivot selected columns of a wide table, creating a "tall and thin" version with the same data.
 - `CROSSJOIN`. Cartesian product of two tables. 
 - `QBN`. Like QUERY, but you refer to each column by its heading instead of "A", "B", etc. Developed by Stack Exchange user [carecki](https://webapps.stackexchange.com/questions/57540/can-i-use-column-headers-in-a-query/167714#167714).
+- `TEMPLATE`. Substitute placeholders in a string, similar to template literal in JS or f-string in Python.
 
 ## Document Named Functions in a consistent way
 
@@ -56,6 +57,25 @@ To create this Named Function in the Google Sheets user interface:
 
 
 ## Change log
+
+### 2025-04-17: New formula TEMPLATE for string interpolation
+
+Substitute placeholders in a string with a value, like a rudimentary version of template literal in JavaScript or f-string in Python. So suppose you have a template string with keys enclosed in curly braces, e.g. "My name is {name} and I am {age} years old." And an array of keys `{ "name", "age" }` and an array of values `{ "Lan", 67 }`. Then you could use this formula ...
+
+```
+= TEMPLATE( 
+  "My name is {name} and I am {age} years old.", 
+  { "name", "age" }, 
+  { "Lan", 67 } 
+)
+```
+
+... to get:
+
+```
+My name is Lan and I am 67 years old.
+```
+
 
 ### 2025-04-16: Fix bug in which INNERJOIN and LEFTJOIN would treat headers as matchable rows
 

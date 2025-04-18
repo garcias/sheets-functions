@@ -378,6 +378,45 @@ LEFTJOIN
 )
 
 /**
+ * TEMPLATE
+ *   Substitutes placeholder expressions in a template string with corresponding values. Placeholders are enclosed 
+ *   in curly brackets, e.g. "My name is {name} and I am {age} years old." Numeric values coerced using TO_TEXT.
+ *   The arrays "keys" and "values" should be same size.
+ * 
+ * @param {String} template  - string literal containing placeholders, e.g. "My name is {name}."
+ * @param {Array} keys   - single-row array containing the name of each key to substitute, e.g. { "name", "age"}, A1:A3
+ * @param {Array} values - single-row array containing the value corresponding to each key, e.g. { "Alice", 37 }, B1:B3
+ * @return {String} same string as template, except with each placeholder replaced by corresponding value
+ * 
+ * @example
+ * = TEMPLATE( "My name is {name} and I am {age} years old.", { "name", "age" }, { "Alice", 37 } )
+ * My name is Alice and I am 37 years old.
+ * 
+ * @example
+ * If cells A1:B4 are set as:
+ * { { "name"  , "age" } ;
+ *   { "Lan"   ,  67   } ;
+ *   { "Alice" ,  37   } ;
+ *   { "T. J." ,  16   } }
+ * 
+ * = BYROW( A2:B4, LAMBDA( row, TEMPLATE( 
+ *   "My name is {name} and I'm {age} years old. -- ""Nice to meet you, {name}!""", 
+ *   A1:B1, row
+ * ) )
+ * My name is Lan and I'm 67 years old. -- "Nice to meet you, Lan!" 
+ * My name is Alice and I'm 37 years old. -- "Nice to meet you, Alice!" 
+ * My name is T. J. and I'm 16 years old. -- "Nice to meet you, T. J.!" 
+ */
+TEMPLATE
+= REDUCE( template, keys, LAMBDA( acc, key,
+  LET(
+    placeholder, CONCATENATE( "\{", key, "\}" ),
+    value, XLOOKUP( key, keys, values ),
+    REGEXREPLACE( acc, placeholder, TO_TEXT(value) ) 
+  )
+ ) )
+
+/**
  * QBN
  *   QUERY function but query string refers to columns by names enclosed in backticks ``
  * 
