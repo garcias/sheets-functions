@@ -58,6 +58,27 @@ To create this Named Function in the Google Sheets user interface:
 
 ## Change log
 
+### 2025-05-20: New formula MAP_ENUMERATE
+
+When using `MAP` on an array, I sometimes want to apply a LAMBDA function that is "index-aware", i.e., its logic depends on the (relative) column and/or row offset of an cell value. Such a function would have the form `LAMBDA( row_num, col_num, cell_value, ... )`; but to use it I need to **enumerate** the array values. This requies me to generate a corresponding sequence (1D case) or arrays (2D case) containing the appropriate indices; and then feed those to `MAP`. To streamline the process, `MAP_ENUMERATE` simply takes the array and the desired lambda function, generates index arrays of the appropriate size and shape, and `MAP`s the function to them. 
+
+This formula is similar to a Javascript Array's `map` method, but the syntax for specifying the map function is different. In Javascript `Array.map( (val, i) => ... )` the first parameter is the *array value*, followed by its enumerated index. I chose to diverge from this syntax in `MAP_ENUMERATE`, requiring the lambda function to specify the first two parameters as the row offset and column offset, followed by the array value. This is to match the existing behavior of `MAKEARRAY`. This is the only Google Sheets formula I know of that supplies cell offsets to a lambda function, and it expects the lambda to treat first parameter as row offset and second parameter as column offset, followed by formula logic specifying a value.
+
+So if you have an array in cells `A1:E2` specified by:
+
+```
+= { "length", "cm", 22.0, 27.7, 33.2 ;
+    "width" ,  "m", 5.02, 7.38, 9.29 }
+```
+
+Then `= MAP_ENUMERATE( A1:E2, LAMBDA( row, col, val, IF( col<3, , val ) ) )` would result in 
+
+```
+= {  ,  , 22.0, 27.7, 33.2 ;
+     ,  , 5.02, 7.38, 9.29 }
+```
+
+
 ### 2025-04-17: New formula TEMPLATE for string interpolation
 
 Substitute placeholders in a string with a value, like a rudimentary version of template literal in JavaScript or f-string in Python. So suppose you have a template string with keys enclosed in curly braces, e.g. "My name is {name} and I am {age} years old." And an array of keys `{ "name", "age" }` and an array of values `{ "Lan", 67 }`. Then you could use this formula ...

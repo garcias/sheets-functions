@@ -34,6 +34,32 @@ REPLACE_HEADER
 }
 
 /**
+ * MAP_ENUMERATE
+ *   Given an array, enumerates each cell value with integers i (row) and j (column). 
+ *   For each cell, applies a three-parameter lambda function f( i, j, cell ).
+ *   Enumeration begins with 1, to match how Google Sheets formulas enumerate arrays.
+ * 
+ * @param {Array}  arr  - array of source data, e.g. { "length", "cm", 22.0, 27.7, 33.2 }
+ * @param {Lambda} func - A three-parameter lambda function of i, j, val; indices starting at 1
+ *                        e.g. LAMBDA( i, j, val, IF( j < 3, , val ) )
+ * @return {Array} an Array of results, see example
+ * 
+ * @example
+ * { "length", "cm", 22.0, 27.7, 33.2 ;
+ *   "width" ,  "m", 5.02, 7.38, 9.29 }
+ * MAP_ENUMERATE( A1:E2, LAMBDA( row, col, val, IF( col<3, , val ) ) )
+ * {        ,      , 22.0, 27.7, 33.2 ;
+ *          ,      , 22.0, 27.7, 33.2 }
+ */
+MAP_ENUMERATE
+= LET(
+  height, ROWS( arr ), width, COLUMNS( arr ),
+  row_offset, MAKEARRAY( height, width, LAMBDA( x, y, x ) ),
+  col_offset, MAKEARRAY( height, width, LAMBDA( x, y, y ) ),
+  MAP( row_offset, col_offset, arr, func )
+)
+
+/**
  * MELT
  *   Unpivots columns and stacks them. First row of each range assumed to be headers; 
  *   headers of values_range will define variable labels of values in the unpivoted columns.
