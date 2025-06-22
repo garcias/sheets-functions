@@ -58,6 +58,35 @@ To create this Named Function in the Google Sheets user interface:
 
 ## Change log
 
+### 2025-06-22: New formula ROUNDROBIN
+
+In some situations you have a group of N participants, and you want to pair up each participant with every other one. There are N * (N - 1) such combinations. If it's possible for multiple pairs to engage in an activity in parallel, then you may want to arrange pairs into a minimum number of rounds. A round-robin tournament is such a grouping into N - 1 rounds, in a way that no pairing is repeated. If there is an odd number of participants, then a "bye" is added to the list, which causes each participant to be unpaired in only one round overall.
+
+It was originally designed to plan chess tournaments, but I use it in teaching to assign pairs and ensure that each student works with a new partner in each round.
+
+For example, the formula
+
+```
+= ROUNDROBIN( { "A", "B", "C" }, "-" )
+```
+
+Would produce a three-column array:
+
+```
+{ { "-", "B", "1" } ;
+  { "A", "C", "1" } ;
+  { "B", "-", "1" } ;
+  { "C", "A", "1" } ;
+  { "-", "A", "2" } ;
+  { "A", "-", "2" } ;
+  { "B", "C", "2" } ;
+  { "C", "B", "2" } ;
+  { "-", "C", "3" } ;
+  { "A", "B", "3" } ;
+  { "B", "A", "3" } ;
+  { "C", "-", "3" } }
+```
+
 ### 2025-05-20: New formula MAP_ENUMERATE
 
 When using `MAP` on an array, I sometimes want to apply a LAMBDA function that is "index-aware", i.e., its logic depends on the (relative) column and/or row offset of an cell value. Such a function would have the form `LAMBDA( row_num, col_num, cell_value, ... )`; but to use it I need to **enumerate** the array values. This requies me to generate a corresponding sequence (1D case) or arrays (2D case) containing the appropriate indices; and then feed those to `MAP`. To streamline the process, `MAP_ENUMERATE` simply takes the array and the desired lambda function, generates index arrays of the appropriate size and shape, and `MAP`s the function to them. 

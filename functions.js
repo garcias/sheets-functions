@@ -443,6 +443,48 @@ TEMPLATE
  ) )
 
 /**
+ * ROUNDROBIN
+ *   For an N-column array of participants, generate combinations of each participant with every other one,
+ *   grouped into the minimum number of rounds (N-1) such that each pairing occurs exactly once. 
+ * 
+ * @param {Array}  participants - single-column array containing the name of each participant, e.g. { "A", "B", "C"}, A1:A7
+ * @param {String}  bye         - value to indicate "bye" if odd number of participants, e.g. "---"
+ * @return {Array}  Three-column array to represent each partner of a pairing, and its assigned round
+ * 
+ * @example
+= ROUNDROBIN( { "A", "B", "C" }, "-" ) 
+ * { { "-", "B", "1" } ;
+ *   { "A", "C", "1" } ;
+ *   { "B", "-", "1" } ;
+ *   { "C", "A", "1" } ;
+ *   { "-", "A", "2" } ;
+ *   { "A", "-", "2" } ;
+ *   { "B", "C", "2" } ;
+ *   { "C", "B", "2" } ;
+ *   { "-", "C", "3" } ;
+ *   { "A", "B", "3" } ;
+ *   { "B", "A", "3" } ;
+ *   { "C", "-", "3" } }
+ */
+ROUNDROBIN
+= LET(
+  size, ROWS( participants ),
+  shimmed, IF( MOD(size,2), { bye; participants }, participants ),
+  mask, MAKEARRAY( ROWS(shimmed), COLUMNS(shimmed), LAMBDA( x, y, x > 1 ) ),
+  first, CHOOSEROWS( shimmed, 1 ),
+  rest, FILTER( shimmed, mask ),
+  num, ROWS( rest ),
+  px, ( MAKEARRAY( 1, num, LAMBDA( x, y, rest) ) ),
+  py, MAP( px, TRANSPOSE( px ), LAMBDA( x, y, IF( x = y, first, y ) ) ),
+  grid, MAKEARRAY( num, num, LAMBDA( x, y, MOD( x + y + 2, num ) + 1 ) ) ,
+  pxcol, TOCOL( px ), pycol, TOCOL( py ), gridcol, TOCOL( grid ),
+  sorted, SORT( { pxcol, pycol, gridcol }, gridcol, TRUE ),
+  arr, { pxcol, pycol, gridcol },
+  full, { arr; CHOOSECOLS( FILTER( arr, pycol = first ), 2, 1, 3 ) },
+  SORT( full, CHOOSECOLS( full, 3 ), TRUE, CHOOSECOLS( full, 1 ), TRUE )
+)
+
+/**
  * QBN
  *   QUERY function but query string refers to columns by names enclosed in backticks ``
  * 
