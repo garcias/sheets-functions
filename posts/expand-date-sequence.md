@@ -34,28 +34,28 @@ To convert it into a reusable formula, select the menu items: **Data > Named Fun
 
 **`table`**. For each row of the three columns, use `date_sequence` to generate an array of dates, then `prepend_id` the corresponding id value to each date. Applied to `A2:C4` in the example, this results in a 2D array, in which some items are blank:
 
-    ```
-    {{ "A", 1/20/2025, "A", 1/21/2025,    ,          ,    ,          ,    ,          , };
-     { "B", 8/8/2025 , "B", 8/9/2025 , "B", 8/10/2025,    ,          ,    ,          , };
-     { "C", 12/1/2025, "C", 12/2/2025, "C", 12/3/2025, "C", 12/4/2025, "C", 12/5/2025, }}
-    ```
+```
+  {{ "A", 1/20/2025, "A", 1/21/2025,    ,          ,    ,          ,    ,          , };
+   { "B", 8/8/2025 , "B", 8/9/2025 , "B", 8/10/2025,    ,          ,    ,          , };
+   { "C", 12/1/2025, "C", 12/2/2025, "C", 12/3/2025, "C", 12/4/2025, "C", 12/5/2025, }}
+```
 
 **return**. Use `TOROW` to flatten into a 1D array, ignoring blanks ...
 
-    ```
-    { "A", 1/20/2025, "A", 1/21/2025, "B", 8/8/2025 , "B", 8/9/2025 , "B", 8/10/2025, ... }
-    ```
+```
+  { "A", 1/20/2025, "A", 1/21/2025, "B", 8/8/2025 , "B", 8/9/2025 , "B", 8/10/2025, ... }
+```
 
 ... and then use `WRAPROWS` to rearrange into the desired two-column form.
 
-    ```
-    {{ "A", 1/20/2025 };
-     { "A", 1/21/2025 };
-     { "B", 8/8/2025  };
-     { "B", 8/9/2025  };
-     { "B", 8/10/2025 };
-     ... }
-    ```
+```
+  {{ "A", 1/20/2025 };
+   { "A", 1/21/2025 };
+   { "B", 8/8/2025  };
+   { "B", 8/9/2025  };
+   { "B", 8/10/2025 };
+   ... }
+```
 
 ### Example data
 
