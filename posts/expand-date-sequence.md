@@ -1,3 +1,8 @@
+## Question: Flatten Date Sequence with an attached Value in Google Sheets
+
+[https://stackoverflow.com/questions/79477805](https://stackoverflow.com/questions/79477805/flatten-date-sequence-with-an-attached-value-in-google-sheets-without-the-use-o) by user [RavenA](https://stackoverflow.com/users/29849328/raven-a)
+
+## Answer
 
 ### Formula
 
