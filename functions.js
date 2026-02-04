@@ -8,7 +8,7 @@
  * @param {Integer} number_of_rows - rows to remove from top, e.g. 1
  * @return {Range} same as full_array with one less row
  */
-TRIM_HEADER
+TRIM_HEADER_LEGACY
 = QUERY( 
   full_array, 
   TEXTJOIN( "", FALSE, "select * offset ", number_of_rows ), 
@@ -27,7 +27,7 @@ TRIM_HEADER
  *                                e.g. A1:B1, {"last", "first"}, "name"
  * @return {Range} same as full_array except for the top row
  */
-REPLACE_HEADER
+REPLACE_HEADER_LEGACY
 = {
   headers_array; 
   TRIM_HEADER( full_array, 1)
@@ -81,12 +81,13 @@ REPLACE_HEADER = LAMBDA( full_array, headers_array,
  * {        ,      , 22.0, 27.7, 33.2 ;
  *          ,      , 22.0, 27.7, 33.2 }
  */
-MAP_ENUMERATE
-= LET(
-  height, ROWS( arr ), width, COLUMNS( arr ),
-  row_offset, MAKEARRAY( height, width, LAMBDA( x, y, x ) ),
-  col_offset, MAKEARRAY( height, width, LAMBDA( x, y, y ) ),
-  MAP( row_offset, col_offset, arr, func )
+MAP_ENUMERATE = LAMBDA( arr, func,
+  LET(
+    height, ROWS( arr ), width, COLUMNS( arr ),
+    row_offset, MAKEARRAY( height, width, LAMBDA( x, y, x ) ),
+    col_offset, MAKEARRAY( height, width, LAMBDA( x, y, y ) ),
+    MAP( row_offset, col_offset, arr, func )
+  )
 )
 
 /**
@@ -111,27 +112,27 @@ MAP_ENUMERATE
  *   "Ben",   "Brink", "arrive", "7:45 am" ;
  *   "Ben",   "Brink", "leave",  "3:45 pm" }
  */
-MELT
-= LET(
-  index_rows, TRIM_HEADER( index_range, 1),
-  values_rows, TRIM_HEADER( values_range, 1),
-  num_index_rows, ROWS( index_rows ),
-  num_labels, COLUMNS( values_range ),
-  dup_index_rows, BYCOL( index_rows, LAMBDA( col,
-    FLATTEN( WRAPCOLS( FLATTEN( 
-      MAKEARRAY( num_labels, 1, LAMBDA( x, y, WRAPROWS( FLATTEN(col), num_index_rows ) ) )
-    ), num_index_rows ) )
-  ) ),
-  labels, FLATTEN( MAKEARRAY( num_index_rows, 1, 
-    LAMBDA( x, y, CHOOSEROWS( values_range, 1) ) ) 
-  ),
-  values, FLATTEN( values_rows ),
-  { 
-    CHOOSEROWS(index_range, 1), "variable", "value" ; 
-    dup_index_rows, labels, values
-  }
+MELT = LAMBDA( index_range, values_range,
+  LET(
+    index_rows, TRIM_HEADER( index_range, 1),
+    values_rows, TRIM_HEADER( values_range, 1),
+    num_index_rows, ROWS( index_rows ),
+    num_labels, COLUMNS( values_range ),
+    dup_index_rows, BYCOL( index_rows, LAMBDA( col,
+      FLATTEN( WRAPCOLS( FLATTEN( 
+        MAKEARRAY( num_labels, 1, LAMBDA( x, y, WRAPROWS( FLATTEN(col), num_index_rows ) ) )
+      ), num_index_rows ) )
+    ) ),
+    labels, FLATTEN( MAKEARRAY( num_index_rows, 1, 
+      LAMBDA( x, y, CHOOSEROWS( values_range, 1) ) ) 
+    ),
+    values, FLATTEN( values_rows ),
+    { 
+      CHOOSEROWS(index_range, 1), "variable", "value" ; 
+      dup_index_rows, labels, values
+    }
+  )
 )
-
 /**
  * MELT_LEGACY
  *   Unpivots columns and stacks them. First row of each range assumed to be headers; 
@@ -185,10 +186,11 @@ MELT_LEGACY
  * @param {value} default - value to return if error, e.g. 0, ""
  * @return {value} value that matches key
  */
-VLOOKUPIFERROR
-= IFERROR( 
-  VLOOKUP( key, datarange, index, sorted ),
-  default
+VLOOKUPIFERROR = LAMBDA( key, datarange, index, sorted, default,
+  IFERROR( 
+    VLOOKUP( key, datarange, index, sorted ),
+    default
+  )
 )
 
 /**
@@ -201,9 +203,10 @@ VLOOKUPIFERROR
  * @param {Boolean} sorted - whether the keys are sorted, e.g. "FALSE"
  * @return {Array} an Array of results, one for each value in the keyrange
  */
-VLOOKUPIFERRORARRAY
-= ARRAYFORMULA(
-  IFERROR( VLOOKUP( keyrange, datarange, index, sorted ), "" )
+VLOOKUPIFERRORARRAY = LAMBDA( keyrange, datarange, index, sorted,
+  ARRAYFORMULA(
+    IFERROR( VLOOKUP( keyrange, datarange, index, sorted ), "" )
+  )
 )
 
 /**
@@ -218,12 +221,13 @@ VLOOKUPIFERRORARRAY
  * @param {Integer} headerrow - row number of header, e.g. 1
  * @return {Array} an Array of results, one for each value in the keyrange
  */
-VLOOKUPIFERRORARRAYWITHHEADER
-= ARRAYFORMULA(
-  IF(
-    row(keyrange)=headerrow,
-    header,
-    IFERROR( VLOOKUP( keyrange, datarange, index, sorted ), "" )
+VLOOKUPIFERRORARRAYWITHHEADER = LAMBDA( keyrange, datarange, index, sorted, header, headerrow,
+  ARRAYFORMULA(
+    IF(
+      row(keyrange)=headerrow,
+      header,
+      IFERROR( VLOOKUP( keyrange, datarange, index, sorted ), "" )
+    )
   )
 )
 
@@ -237,10 +241,11 @@ VLOOKUPIFERRORARRAYWITHHEADER
  * @param {value} default - value to return if error, e.g. 0, ""
  * @return {value} value in result_range that matches key
  */
-XLOOKUPIFERROR
-= IFERROR( 
-  XLOOKUP( key, lookup_range, result_range ),
-  default
+XLOOKUPIFERROR = LAMBDA( key, lookup_range, result_range, default,
+  IFERROR( 
+    XLOOKUP( key, lookup_range, result_range ),
+    default
+  )
 )
 
 /**
@@ -252,9 +257,10 @@ XLOOKUPIFERROR
  * @param {Range} result_range - range that contains result values, e.g. sheet1!A:A
  * @return {Array} an Array of results, one for each value in the keyrange
  */
-XLOOKUPIFERRORARRAY
-= ARRAYFORMULA(
-  IFERROR( XLOOKUP( keyrange, lookup_range, result_range ), "" )
+XLOOKUPIFERRORARRAY = LAMBDA( keyrange, lookup_range, result_range,
+  ARRAYFORMULA(
+    IFERROR( XLOOKUP( keyrange, lookup_range, result_range ), "" )
+  )
 )
 
 /**
@@ -268,12 +274,13 @@ XLOOKUPIFERRORARRAY
  * @param {Integer} headerrow - row number of header, e.g. 1
  * @return {Array} an Array of results, one for each value in the keyrange
  */
-XLOOKUPIFERRORARRAYWITHHEADER
-= ARRAYFORMULA(
-  IF(
-    row(keyrange)=headerrow,
-    header,
-    IFERROR( XLOOKUP( keyrange, lookup_range, result_range ), "" )
+XLOOKUPIFERRORARRAYWITHHEADER = LAMBDA( keyrange, lookup_range, result_range, header, headerrow,
+  ARRAYFORMULA(
+    IF(
+      row(keyrange)=headerrow,
+      header,
+      IFERROR( XLOOKUP( keyrange, lookup_range, result_range ), "" )
+    )
   )
 )
 
@@ -288,30 +295,31 @@ XLOOKUPIFERRORARRAYWITHHEADER
  * @param {Array} attributes_range - array of attributes per entity, e.g. attributes!A:B
  * @return {Array} an Array of results, one for each value in the keyrange
  */
-CROSSJOIN
-= LET(
-  number_of_entities, rows( entities_range ),
-  number_of_attributes, rows( attributes_range ),
-  {
-    WRAPCOLS(
-      FLATTEN( 
-        MAKEARRAY( 
-          1, 
-          number_of_attributes, 
-          LAMBDA( row, col, FLATTEN(TRANSPOSE(entities_range)) ) ) 
+CROSSJOIN = LAMBDA( entities_range, attributes_range,
+  LET(
+    number_of_entities, rows( entities_range ),
+    number_of_attributes, rows( attributes_range ),
+    {
+      WRAPCOLS(
+        FLATTEN( 
+          MAKEARRAY( 
+            1, 
+            number_of_attributes, 
+            LAMBDA( row, col, FLATTEN(TRANSPOSE(entities_range)) ) ) 
+        ),
+        number_of_attributes * number_of_entities
       ),
-      number_of_attributes * number_of_entities
-    ),
-    WRAPROWS(
-      FLATTEN(
-        MAKEARRAY( 
-          number_of_entities, 
-          1, 
-          LAMBDA( row, col, TRANSPOSE( FLATTEN(attributes_range)) ) )
-      ),
-      COLUMNS( attributes_range )
-    )
-  }
+      WRAPROWS(
+        FLATTEN(
+          MAKEARRAY( 
+            number_of_entities, 
+            1, 
+            LAMBDA( row, col, TRANSPOSE( FLATTEN(attributes_range)) ) )
+        ),
+        COLUMNS( attributes_range )
+      )
+    }
+  )
 )
 
 /**
@@ -352,26 +360,27 @@ CROSSJOIN
  *   { "Weisz",    "pancake",     1    , "milk"      ,  "40 g"    } ;
  *   { "Weisz",    "pancake",     1    , "flour"     ,  "150 g"   } }
  */
-INNERJOIN
-= LET(
-  data_left, TRIM_HEADER(data_left_lbl,1), data_right, TRIM_HEADER(data_right_lbl,1),
-  keys_left, TRIM_HEADER(keys_left_lbl,1), keys_right, TRIM_HEADER(keys_right_lbl,1),
-  index_left, SEQUENCE( ROWS( keys_left ) ),
-  prefilter, ARRAYFORMULA( MATCH( keys_left, keys_right, 0 ) ),
-  index_left_filtered, FILTER( index_left, prefilter ),
-  keys_left_filtered, FILTER( keys_left, prefilter ),
-  matches, MAP( index_left_filtered, keys_left_filtered, LAMBDA( id_left, key_left,
-    LET(
-      row_left, XLOOKUP( id_left, index_left, data_left ),
-      matches_right, FILTER( data_right, keys_right = key_left ),
-      TOROW( BYROW( matches_right, LAMBDA( row_right,
-        HSTACK( row_left, row_right )
-      ) ) )
-    )
-  ) ),
-  wrapped, WRAPROWS( FLATTEN(matches), COLUMNS(data_right) + COLUMNS(data_left) ),
-  notblank, FILTER( wrapped, NOT(ISBLANK(CHOOSECOLS(wrapped, 1))) ),
-  { CHOOSEROWS( data_left_lbl, 1 ), CHOOSEROWS( data_right_lbl, 1); notblank }
+INNERJOIN = LAMBDA( data_left_lbl, keys_left_lbl, data_right_lbl, keys_right_lbl,
+  LET(
+    data_left, TRIM_HEADER(data_left_lbl,1), data_right, TRIM_HEADER(data_right_lbl,1),
+    keys_left, TRIM_HEADER(keys_left_lbl,1), keys_right, TRIM_HEADER(keys_right_lbl,1),
+    index_left, SEQUENCE( ROWS( keys_left ) ),
+    prefilter, ARRAYFORMULA( MATCH( keys_left, keys_right, 0 ) ),
+    index_left_filtered, FILTER( index_left, prefilter ),
+    keys_left_filtered, FILTER( keys_left, prefilter ),
+    matches, MAP( index_left_filtered, keys_left_filtered, LAMBDA( id_left, key_left,
+      LET(
+        row_left, XLOOKUP( id_left, index_left, data_left ),
+        matches_right, FILTER( data_right, keys_right = key_left ),
+        TOROW( BYROW( matches_right, LAMBDA( row_right,
+          HSTACK( row_left, row_right )
+        ) ) )
+      )
+    ) ),
+    wrapped, WRAPROWS( FLATTEN(matches), COLUMNS(data_right) + COLUMNS(data_left) ),
+    notblank, FILTER( wrapped, NOT(ISBLANK(CHOOSECOLS(wrapped, 1))) ),
+    { CHOOSEROWS( data_left_lbl, 1 ), CHOOSEROWS( data_right_lbl, 1); notblank }
+  )
 )
 
 /**
@@ -414,23 +423,24 @@ INNERJOIN
  *   { "Weisz",    "pancake",     1    , "flour"     ,  "150 g"   } ;
  *   { "Lemmy",    "waffles",     4    , IF(TRUE,)   ,  IF(TRUE,) } }
  */
-LEFTJOIN
-= LET(
-  data_left, TRIM_HEADER(data_left_lbl,1), data_right, TRIM_HEADER(data_right_lbl,1),
-  keys_left, TRIM_HEADER(keys_left_lbl,1), keys_right, TRIM_HEADER(keys_right_lbl,1),
-  index_left, SEQUENCE( ROWS( keys_left ) ),
-  matches, MAP( index_left, keys_left, LAMBDA( id_left, key_left,
-    LET(
-      row_left, XLOOKUP( id_left, index_left, data_left ),
-      matches_right, IFERROR( FILTER( data_right, keys_right = key_left ), ),
-      TOROW( BYROW( matches_right, LAMBDA( row_right,
-        HSTACK( row_left, row_right )
-      ) ) )
-    )
-  ) ),
-  wrapped, WRAPROWS( FLATTEN(matches), COLUMNS(data_right) + COLUMNS(data_left) ),
-  notblank, FILTER( wrapped, NOT(ISBLANK(CHOOSECOLS(wrapped, 1))) ),
-  { CHOOSEROWS( data_left_lbl, 1 ), CHOOSEROWS( data_right_lbl, 1) ; notblank }
+LEFTJOIN = LAMBDA( data_left_lbl, keys_left_lbl, data_right_lbl, keys_right_lbl,
+  LET(
+    data_left, TRIM_HEADER(data_left_lbl,1), data_right, TRIM_HEADER(data_right_lbl,1),
+    keys_left, TRIM_HEADER(keys_left_lbl,1), keys_right, TRIM_HEADER(keys_right_lbl,1),
+    index_left, SEQUENCE( ROWS( keys_left ) ),
+    matches, MAP( index_left, keys_left, LAMBDA( id_left, key_left,
+      LET(
+        row_left, XLOOKUP( id_left, index_left, data_left ),
+        matches_right, IFERROR( FILTER( data_right, keys_right = key_left ), ),
+        TOROW( BYROW( matches_right, LAMBDA( row_right,
+          HSTACK( row_left, row_right )
+        ) ) )
+      )
+    ) ),
+    wrapped, WRAPROWS( FLATTEN(matches), COLUMNS(data_right) + COLUMNS(data_left) ),
+    notblank, FILTER( wrapped, NOT(ISBLANK(CHOOSECOLS(wrapped, 1))) ),
+    { CHOOSEROWS( data_left_lbl, 1 ), CHOOSEROWS( data_right_lbl, 1) ; notblank }
+  )
 )
 
 /**
@@ -463,14 +473,15 @@ LEFTJOIN
  * My name is Alice and I'm 37 years old. -- "Nice to meet you, Alice!" 
  * My name is T. J. and I'm 16 years old. -- "Nice to meet you, T. J.!" 
  */
-TEMPLATE
-= REDUCE( template, keys, LAMBDA( acc, key,
-  LET(
-    placeholder, CONCATENATE( "\{", key, "\}" ),
-    value, XLOOKUP( key, keys, values ),
-    REGEXREPLACE( acc, placeholder, TO_TEXT(value) ) 
-  )
- ) )
+TEMPLATE = LAMBDA( template, keys, values,
+  REDUCE( template, keys, LAMBDA( acc, key,
+    LET(
+      placeholder, CONCATENATE( "\{", key, "\}" ),
+      value, XLOOKUP( key, keys, values ),
+      REGEXREPLACE( acc, placeholder, TO_TEXT(value) ) 
+    )
+   ) )
+)
 
 /**
  * ROUNDROBIN
@@ -496,22 +507,23 @@ TEMPLATE
  *   { "B", "A", "3" } ;
  *   { "C", "-", "3" } }
  */
-ROUNDROBIN
-= LET(
-  size, ROWS( participants ),
-  shimmed, IF( MOD(size,2), { bye; participants }, participants ),
-  mask, MAKEARRAY( ROWS(shimmed), COLUMNS(shimmed), LAMBDA( x, y, x > 1 ) ),
-  first, CHOOSEROWS( shimmed, 1 ),
-  rest, FILTER( shimmed, mask ),
-  num, ROWS( rest ),
-  px, ( MAKEARRAY( 1, num, LAMBDA( x, y, rest) ) ),
-  py, MAP( px, TRANSPOSE( px ), LAMBDA( x, y, IF( x = y, first, y ) ) ),
-  grid, MAKEARRAY( num, num, LAMBDA( x, y, MOD( x + y + 2, num ) + 1 ) ) ,
-  pxcol, TOCOL( px ), pycol, TOCOL( py ), gridcol, TOCOL( grid ),
-  sorted, SORT( { pxcol, pycol, gridcol }, gridcol, TRUE ),
-  arr, { pxcol, pycol, gridcol },
-  full, { arr; CHOOSECOLS( FILTER( arr, pycol = first ), 2, 1, 3 ) },
-  SORT( full, CHOOSECOLS( full, 3 ), TRUE, CHOOSECOLS( full, 1 ), TRUE )
+ROUNDROBIN = LAMBDA( participants, bye,
+  LET(
+    size, ROWS( participants ),
+    shimmed, IF( MOD(size,2), { bye; participants }, participants ),
+    mask, MAKEARRAY( ROWS(shimmed), COLUMNS(shimmed), LAMBDA( x, y, x > 1 ) ),
+    first, CHOOSEROWS( shimmed, 1 ),
+    rest, FILTER( shimmed, mask ),
+    num, ROWS( rest ),
+    px, ( MAKEARRAY( 1, num, LAMBDA( x, y, rest) ) ),
+    py, MAP( px, TRANSPOSE( px ), LAMBDA( x, y, IF( x = y, first, y ) ) ),
+    grid, MAKEARRAY( num, num, LAMBDA( x, y, MOD( x + y + 2, num ) + 1 ) ) ,
+    pxcol, TOCOL( px ), pycol, TOCOL( py ), gridcol, TOCOL( grid ),
+    sorted, SORT( { pxcol, pycol, gridcol }, gridcol, TRUE ),
+    arr, { pxcol, pycol, gridcol },
+    full, { arr; CHOOSECOLS( FILTER( arr, pycol = first ), 2, 1, 3 ) },
+    SORT( full, CHOOSECOLS( full, 3 ), TRUE, CHOOSECOLS( full, 1 ), TRUE )
+  )
 )
 
 /**
@@ -526,19 +538,20 @@ ROUNDROBIN
  *                              e.g. "SELECT `last`, `first` WHERE `reported age` > 30"
  * @return {Array}
  */
-QBN
-= QUERY(
-  {data}, 
-  LAMBDA( text, columns,
-    REDUCE( 
-      text, 
-      FILTER( columns, NOT(ISBLANK(columns)) ), 
-      LAMBDA( res, col, 
-        REGEXREPLACE(res, "`" & col & "`", "Col" & MATCH(col, columns, 0))
+QBN = LAMBDA( data, query_text,
+  QUERY(
+    {data}, 
+    LAMBDA( text, columns,
+      REDUCE( 
+        text, 
+        FILTER( columns, NOT(ISBLANK(columns)) ), 
+        LAMBDA( res, col, 
+          REGEXREPLACE(res, "`" & col & "`", "Col" & MATCH(col, columns, 0))
+        )
       )
-    )
-  ) ( query_text, ARRAY_CONSTRAIN( data, 1, COLUMNS(data) ) ),
-  1
+    ) ( query_text, ARRAY_CONSTRAIN( data, 1, COLUMNS(data) ) ),
+    1
+  )
 )
 
 /**

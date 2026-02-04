@@ -24,39 +24,43 @@ I store all my favorite Named functions in a public Google Sheet named "[functio
 
 ## Document Named Functions in a consistent way
 
-I tend to follow JavasScript-like conventions (e.g., indentation and bracket alignment) when writing a Named Function. Therefore I define them in this repo as files with `.js` extensions, and I use JSDoc-like syntax to indicate the name of the function and to describe its parameters. Different parts of the definition need to be translated to the Named Functions interface in Sheets. Consider the example below for the function `XLOOKUPIFERRORARRAY`.
+I tend to follow JavasScript-like conventions (e.g., indentation and bracket alignment) when writing a Named Function. Therefore I define them in this repo as files with `.js` extensions, and I use JSDoc-like syntax to indicate the name of the function and to describe its parameters. Different parts of the definition need to be translated to the Named Functions interface in Sheets. Consider the example below for the function `TRIM_HEADER`.
 
 ```js
 /**
- * XLOOKUPIFERRORARRAY
- *   Applies XLOOKUPIFERROR to a range of keys, with header column
+ * TRIM_HEADER
+ *   Remove first N rows from top of an array
  * 
- * @param {Range} keyrange - range of keys, e.g. A:A
- * @param {Range} lookup_range - range to search for each key, e.g. sheet1!D:D
- * @param {Range} result_range - range that contains result values, e.g. sheet1!A:A
- * @param {Text} header - text to display as the column header, e.g. "Last name"
- * @param {Integer} headerrow - row number of header, e.g. 1
- * @return {Array} an Array of results, one for each value in the keyrange
+ * @param {Range} full_array - array to trim header from, e.g. A:D
+ * @param {Integer} number_of_rows - rows to remove from top, e.g. 1
+ * @return {Range} same as full_array with N less rows
  */
-
-= ARRAYFORMULA(
-  IF(
-    row(keyrange)=headerrow,
-    header,
-    IFERROR( XLOOKUP( keyrange, lookup_range, result_range ), "" )
-  )
+TRIM_HEADER = LAMBDA( full_array, number_of_rows,
+  FILTER( full_array, SEQUENCE( ROWS(full_array) ) > number_of_rows )
 )
 ```
 
 To create this Named Function in the Google Sheets user interface:
 
-- In **Named function details**: Set the name as `XLOOKUPIFERRORARRAY` and enter the description *"XLOOKUPIFERROR on a range of keys, with header column"*
-- In **Argument placeholders**: Create parameters named `keyrange`, `lookup_range`, `result_range`, `header`, `headerrow`
-- In **Formula definition**: Enter `= ARRAYFORMULA( if( row(keyrange)=headerrow, ... ) )`
-- In **Additional details**: For `keyrange` enter the description *"range of keyes"* and the example *"A:A"*. Repeat for remaining arguments
+- In **Named function details**: Set the name as `TRIM_HEADER` and enter the description *"Remove first N rows from top of an array"*
+- In **Argument placeholders**: Create parameters named `full_array`, `number_of_rows`, in that order
+- In **Formula definition**: Enter only the lines between the first and last, e.g., `FILTER( full_array, SEQUENCE( ROWS(full_array) ) > number_of_rows )`
+- In **Additional details**: For `full_array` enter the description *"array to trim header from"* and the example *"A:D"*; repeat for remaining arguments
 
 
 ## Change log
+
+### 2025-03-18: Rewrite functions as `LAMBDA`s
+
+Rewrote each function in the form:
+
+```js
+<function name> = LAMBDA( <parameters>, 
+  <formula>
+)
+```
+
+I like this format because it demonstrates the order of arguments. It is also the form that a function takes during development and testing in a sheet. And to enter it into a sheet as a named function, you simply copy just the lines between the first and last.
 
 ### 2025-03-18: Update TRIM_HEADER and REPLACE_HEADER for greater generality
 
