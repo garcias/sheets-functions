@@ -58,6 +58,11 @@ To create this Named Function in the Google Sheets user interface:
 
 ## Change log
 
+### 2025-03-18: Update TRIM_HEADER and REPLACE_HEADER for greater generality
+
+The previous version of `REPLACE_HEADER` only replaced a single row. The new version inspects the header array parameter to determine the number of rows to replace. In the process, I also updated the dependency `TRIM_HEADER` to rely on `FILTER` instead of `QUERY`. It's slightly slower, but more readable to me.
+The previous versions are now named `TRIM_HEADER_LEGACY` and `REPLACE_HEADER_LEGACY`.
+
 ### 2025-06-22: New formula ROUNDROBIN
 
 In some situations you have a group of N participants, and you want to pair up each participant with every other one. There are N * (N - 1) such combinations. If it's possible for multiple pairs to engage in an activity in parallel, then you may want to arrange pairs into a minimum number of rounds. A round-robin tournament is such a grouping into N - 1 rounds, in a way that no pairing is repeated. If there is an odd number of participants, then a "bye" is added to the list, which causes each participant to be unpaired in only one round overall.

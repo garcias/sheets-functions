@@ -1,5 +1,5 @@
 /**
- * TRIM_HEADER
+ * TRIM_HEADER_LEGACY
  *   Remove the first N rows from top of an array
  *   Useful to define an ARRAYFORMULA that includes the header row
  *   but don't want to include it in argument to other functions
@@ -16,7 +16,7 @@ TRIM_HEADER
 )
 
 /**
- * REPLACE_HEADER
+ * REPLACE_HEADER_LEGACY
  *   Replaces the first row of an array with specified headers
  *   Useful when you want to put ARRAYFORMULA calculation into the first row, but
  *   give the column an arbitrary header
@@ -32,6 +32,36 @@ REPLACE_HEADER
   headers_array; 
   TRIM_HEADER( full_array, 1)
 }
+
+/**
+ * TRIM_HEADER
+ *   Remove first N rows from top of an array
+ *   Useful to define an ARRAYFORMULA that includes the header row
+ *   but don't want to include it in argument to other functions
+ * 
+ * @param {Range} full_array - array to trim header from, e.g. A:D
+ * @param {Integer} number_of_rows - rows to remove from top, e.g. 1
+ * @return {Range} same as full_array with N less rows
+ */
+TRIM_HEADER = LAMBDA( full_array, number_of_rows,
+  FILTER( full_array, SEQUENCE( ROWS(full_array) ) > number_of_rows )
+)
+
+/**
+ * REPLACE_HEADER
+ *   Replace first N rows of an array with headers specified in an N-row array
+ *   headers_array must have same number of columns as full_array
+ *   Useful when you want to put ARRAYFORMULA calculation into the top row(s), but
+ *   give specified header(s)
+ * 
+ * @param {Range} full_array - array or generating arrayformula, e.g. A:D
+ * @param {Range} headers_array - an array to specify header for each column of full_array; 
+ *                                e.g. { { "mass", "volume"}; { "grams", "liters"} }, "name" 
+ * @return {Range} same as full_array except top N rows are replaced with headers
+ */
+REPLACE_HEADER = LAMBDA( full_array, headers_array,
+  { headers_array; TRIM_HEADER( full_array, ROWS(headers_array)) }
+)
 
 /**
  * MAP_ENUMERATE
