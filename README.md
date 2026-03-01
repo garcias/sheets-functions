@@ -50,11 +50,11 @@ To create this Named Function in the Google Sheets user interface:
 
 ## Change log
 
-### 2025-03-18: Rewrite functions as `LAMBDA`s
+### 2026-02-04: Rewrite functions as `LAMBDA`s
 
 Rewrote each function in the form:
 
-```js
+```
 <function name> = LAMBDA( <parameters>, 
   <formula>
 )
@@ -62,7 +62,7 @@ Rewrote each function in the form:
 
 I like this format because it demonstrates the order of arguments. It is also the form that a function takes during development and testing in a sheet. And to enter it into a sheet as a named function, you simply copy just the lines between the first and last.
 
-### 2025-03-18: Update TRIM_HEADER and REPLACE_HEADER for greater generality
+### 2026-02-04: Update TRIM_HEADER and REPLACE_HEADER for greater generality
 
 The previous version of `REPLACE_HEADER` only replaced a single row. The new version inspects the header array parameter to determine the number of rows to replace. In the process, I also updated the dependency `TRIM_HEADER` to rely on `FILTER` instead of `QUERY`. It's slightly slower, but more readable to me.
 The previous versions are now named `TRIM_HEADER_LEGACY` and `REPLACE_HEADER_LEGACY`.
