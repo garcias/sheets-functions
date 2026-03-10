@@ -479,6 +479,52 @@ QBN = LAMBDA( data, query_text,
 )
 
 /**
+ * LINEST_LABELED
+ *   Wrapper around LINEST that actually tells you what each coefficient represents
+ * 
+ * @param {Array} y_array - single-column array of feature values
+ * @param {Array} x_array - multi-column array of predictor values, first column is considered "x1", etc. 
+ * @param {Boolean} calculate_b - if False, held at 0; if True, will be added to the model as "coeff 0"
+ * @return {Array}
+ *   - two columns of keys and values, length depends on columns in x_array; e.g., if 5 predictors, then keys will be 
+ *     { "coeff 5";       "coeff 4";        ... "coeff 1";       "coeff 0";  
+ *       "coeff 5 error"; "coeff 4 error"; ...; "coeff 1 error"; "coeff 0 error";
+ *       "R-squared"; "std error y"; "F statistic"; "DOF"; "explained SS"; "residual SS" }
+ *   - coeff 0 is the same as intercept
+ * @example
+ * = LET(
+ *   regression, LINEST_LABELED( A8:A16, B8:B16, TRUE ),
+ *   slope,     VLOOKUP( "coeff 1", regression, 2, FALSE ),
+ *   intercept, VLOOKUP( "coeff 0", regression, 2, FALSE ),
+ *   model, LAMBDA( x, slope * x + intercept ),
+ *   MAP( { 0; 1.2; 3.3 }, model )
+ * )
+ */
+LINEST_LABELED = LAMBDA( y_array, x_array, calculate_b, LET(
+  regression_output, LINEST( y_array, x_array, calculate_b, TRUE ),
+  coeff_values, LET(
+    coeffs, CHOOSEROWS( regression_output, 1, 2 ),
+    TOCOL( coeffs )
+  ),
+  stats_values, LET(
+    stats, CHOOSEROWS( regression_output, 3, 4, 5 ),
+    stats_sans_NA, CHOOSECOLS( stats, 1, 2 ),
+    TOCOL( stats_sans_NA )
+  ),
+  coeff_labels, LET(
+    num_ind, COLUMNS( x_array ),
+    idx, SEQUENCE( num_ind + 1, 1, num_ind, -1 ),
+    x_labels, MAP( idx, LAMBDA( i, { "coeff "&i, "coeff "&i&" error" } ) ),
+    TOCOL( TRANSPOSE( x_labels ) )
+  ),
+  stats_labels, LET(
+    stats, { "R-squared"; "std error y"; "F statistic"; "DOF"; "explained SS"; "residual SS" },
+    TOCOL( stats )
+  ),
+  { { coeff_labels, coeff_values }; { stats_labels, stats_values } }
+) )
+
+/**
  * TESTING 
  *   Formulas useful for generating test data
  */

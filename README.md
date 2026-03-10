@@ -50,6 +50,42 @@ To create this Named Function in the Google Sheets user interface:
 
 ## Change log
 
+### 2026-03-10: New formula LINEST_LABELED
+
+The Google Sheets `LINEST` function, which computes linear regression on a data set, returns a 2D array containing various statistics but you can only identify each one *positionally* --- and the positional mapping varies with the number of predictors. `LINEST_LABELED` is a wrapper that reshapes the output and labels each statistic. So instead of this mysterious array of values (for a two-predictor regression) ...
+
+|                |                |               |
+| --------------:| --------------:| -------------:|
+| 1.151703005    | 0.4252874858   | -5.839238736  |
+| 0.4913762308   | 0.6824417895   | 4.193330885   |
+| 0.9769708817   | 0.8754893237   | #N/A          |
+| 127.2698593    | 6              | #N/A          |
+| 195.0999996    | 4.598889335    | #N/A          |
+|                |                |               |
+
+... you get a two-column array of labels and values ...
+
+|               |               |
+| ------------- | ------------: |
+| coeff 2       |  1.151703005  |
+| coeff 1       |  0.4252874858 |
+| coeff 0       | -5.839238736  |
+| coeff 2 error |  0.4913762308 |
+| coeff 1 error |  0.6824417895 |
+| coeff 0 error |  4.193330885  |
+| R-squared     |  0.9769708817 |
+| error y       |  0.8754893237 |
+| F statistic   |  127.2698593  |
+| DOF           |  6            |
+| explained SS  |  195.0999996  |
+| residual SS   |  4.598889335  |
+|               |               |
+
+So the meaning of each values is right there in the output, and you don't have to look up and decipher the arcane [documentation for `LINEST`](https://support.google.com/docs/answer/3094249).
+
+Anyone who is required by circumstance to do regression in Google Sheets ... you have my sympathy; I hope this formula makes your task a little less painful.
+
+
 ### 2026-02-04: Rewrite functions as `LAMBDA`s
 
 Rewrote each function in the form:
