@@ -417,7 +417,7 @@ TEMPLATE = LAMBDA( template, keys, values,
  * @return {Array}  Three-column array to represent each partner of a pairing, and its assigned round
  * 
  * @example
-= ROUNDROBIN( { "A", "B", "C" }, "-" ) 
+ * = ROUNDROBIN( { "A", "B", "C" }, "-" ) 
  * { { "-", "B", "1" } ;
  *   { "A", "C", "1" } ;
  *   { "B", "-", "1" } ;
@@ -523,6 +523,33 @@ LINEST_LABELED = LAMBDA( y_array, x_array, calculate_b, LET(
   ),
   { { coeff_labels, coeff_values }; { stats_labels, stats_values } }
 ) )
+
+/**
+ * GET
+ *   Given a multi-column array in which the first column represents unique keys,
+ *   return the value (or array of values) corresponding to a given key.
+ *   Convenience formula to handle lookups
+ * 
+ * @param {Array}  kv_array - multi-column array of key-value pairs, e.g. {{ "A", 1 }; { "B", 2 }}
+ * @param {any}    key      - numeric or string value to search in the first column, e.g. "A"
+ * @return {Array}  The value (or array of values) corresponding to the given key
+ * 
+ * @example
+ * = GET( { { "A", 1 }; { "B", 2 } }, "A" )  
+ * 1
+ *
+ * = GET( { { "A", 1, "aardvark" }; { "B", 2, "badger" } }, "A" )
+ * { 1, "aardvark" }
+ *
+ */
+GET = LAMBDA( kv_array, key, 
+  LET(
+    keys, CHOOSECOLS( kv_array, 1 ),
+    select_cols, SEQUENCE( COLUMNS( kv_array )-1, 1, 2, 1 ),
+    vals, CHOOSECOLS( kv_array, select_cols ),
+    XLOOKUP( key, keys, vals )
+  ) 
+)
 
 /**
  * TESTING 
