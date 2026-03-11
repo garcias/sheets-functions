@@ -56,36 +56,37 @@ Google Sheets doesn't have a hashmap type, but that doesn't stop people from orc
 
 I thought of this while testing my implementation of `LINEST_LABELED`. After outputting a nice labeled array of statistical values, it was only natural to think of those labels as keys:
 
-|    | A             |  B            |
-| -: | ------------- | ------------: |
-| 1  | coeff 2       |  1.151703005  |
-| 2  | coeff 1       |  0.4252874858 |
-| 3  | coeff 0       | -5.839238736  |
-| 4  | coeff 2 error |  0.4913762308 |
-| 5  | coeff 1 error |  0.6824417895 |
-| 6  | coeff 0 error |  4.193330885  |
-| 7  | R-squared     |  0.9769708817 |
-| 8  | error y       |  0.8754893237 |
-| 9  | F statistic   |  127.2698593  |
-| 10 | DOF           |  6            |
-| 11 | explained SS  |  195.0999996  |
-| 12 | residual SS   |  4.598889335  |
+|      | A             |  B            |
+| ---: | ------------- | ------------: |
+| *1*  | coeff 2       |  1.151703005  |
+| *2*  | coeff 1       |  0.4252874858 |
+| *3*  | coeff 0       | -5.839238736  |
+| *4*  | coeff 2 error |  0.4913762308 |
+| *5*  | coeff 1 error |  0.6824417895 |
+| *6*  | coeff 0 error |  4.193330885  |
+| *7*  | R-squared     |  0.9769708817 |
+| *8*  | error y       |  0.8754893237 |
+| *9*  | F statistic   |  127.2698593  |
+| *10* | DOF           |  6            |
+| *11* | explained SS  |  195.0999996  |
+| *12* | residual SS   |  4.598889335  |
 
 So the formula `GET( A1:B12, "coeff 0" )` returns `-5.839238736`.
 
-And the more complicated formula
+And the more complicated formula:
 
 ```
 = LET(
-  intercept, GET( A1:B12, "coeff 0" ),
-  slope_1,   GET( A1:B12, "coeff 1" ),
-  slope_2,   GET( A1:B12, "coeff 2" ),
+  regression, A1:B12,
+  intercept, GET( regression, "coeff 0" ),
+  slope_1,   GET( regression, "coeff 1" ),
+  slope_2,   GET( regression, "coeff 2" ),
   PREDICT, LAMBDA( x_1, x_2, slope_0 + slope_1*x_1 + slope_2*x_2 ),
   PREDICT( 1, 9 )
 )
 ```
 
-returns `4.951375796`
+returns `4.951375796` (-5.839238736 + 0.6824417895 * 1 + 0.4913762308 * 9).
 
 
 ### 2026-03-10: New formula LINEST_LABELED
